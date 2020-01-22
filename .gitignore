@@ -1,0 +1,4 @@
+vendor/
+s.go
+freightsrv
+.gitsecret/keys/random_seed
