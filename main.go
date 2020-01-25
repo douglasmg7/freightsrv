@@ -104,6 +104,9 @@ func main() {
 	signal.Notify(serverStopRequest, os.Interrupt)
 	go shutdown(server, serverStopRequest, serverStopFinish)
 
+	correiosFreight()
+	// testXML()
+
 	log.Printf("listen address: %s", address[1:])
 	// log.Fatal(http.ListenAndServe(address, newLogger(router)))
 	if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
