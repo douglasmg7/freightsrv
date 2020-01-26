@@ -28,6 +28,13 @@ var initTime time.Time
 // Brazil time location.
 var brLocation *time.Location
 
+type freight struct {
+	Carrier  string  `xml:"carrier"`
+	Service  string  `xml:"service"`
+	Price    float64 `xml:"price"`
+	DeadLine int     `xml:"deadLine"` // Days.
+}
+
 func init() {
 	// Brazil location.
 	brLocation, err = time.LoadLocation("America/Sao_Paulo")
@@ -72,17 +79,6 @@ func init() {
 	log.Printf("Starting in %v mode (version %s)\n", mode, version)
 }
 
-func checkError(err error) bool {
-	if err != nil {
-		// notice that we're using 1, so it will actually log where
-		// the error happened, 0 = this function, we don't want that.
-		function, file, line, _ := runtime.Caller(1)
-		log.Printf("[error] [%s] [%s:%d] %v", filepath.Base(file), runtime.FuncForPC(function).Name(), line, err)
-		return true
-	}
-	return false
-}
-
 func main() {
 	// Init router.
 	router := httprouter.New()
@@ -104,7 +100,17 @@ func main() {
 	signal.Notify(serverStopRequest, os.Interrupt)
 	go shutdown(server, serverStopRequest, serverStopFinish)
 
-	correiosFreight()
+	p := pack{
+		DestinyCEP: "35460000",
+		Weight:     1500,
+		Length:     20,
+		Height:     30,
+		Width:      40,
+	}
+	freights, err := correiosFreight(p)
+	if !checkError(err) {
+		log.Printf("Estimate freights: %+v", freights)
+	}
 	// testXML()
 
 	log.Printf("listen address: %s", address[1:])
@@ -131,7 +137,7 @@ func shutdown(server *http.Server, serverStopRequest <-chan os.Signal, serverSto
 }
 
 /**************************************************************************************************
-* Authorization middleware
+* AUTHORIZATION MIDDLEWARE
 **************************************************************************************************/
 // Authorization.
 func checkZoomAuthorization(h httprouter.Handle) httprouter.Handle {
@@ -170,7 +176,7 @@ func checkZunkaSiteAuthorization(h httprouter.Handle) httprouter.Handle {
 }
 
 /**************************************************************************************************
-* Logger middleware
+* LOGGER MIDDLEWARE
 **************************************************************************************************/
 // Logger struct.
 type logger struct {
@@ -196,4 +202,18 @@ func checkFatalError(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+/**************************************************************************************************
+* ERROS
+**************************************************************************************************/
+func checkError(err error) bool {
+	if err != nil {
+		// notice that we're using 1, so it will actually log where
+		// the error happened, 0 = this function, we don't want that.
+		function, file, line, _ := runtime.Caller(1)
+		log.Printf("[error] [%s] [%s:%d] %v", filepath.Base(file), runtime.FuncForPC(function).Name(), line, err)
+		return true
+	}
+	return false
 }
