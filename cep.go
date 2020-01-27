@@ -28,7 +28,7 @@ func addressFromCEP(cep string) (viaCEPAddress, error) {
 	// Check if CEP is valid "00000000".
 	cepRE := regexp.MustCompile(`^\d{8}$`)
 	if !cepRE.MatchString(cep) {
-		return address, fmt.Errorf("CEP \"%s\" inválid")
+		return address, fmt.Errorf("CEP \"%s\" inválid", cep)
 	}
 
 	// Get address from.
