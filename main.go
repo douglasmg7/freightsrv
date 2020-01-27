@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis/v7"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -24,6 +25,8 @@ var logPath string
 // Development mode.
 var dev bool
 var initTime time.Time
+
+var redisClient *redis.Client
 
 // Brazil time location.
 var brLocation *time.Location
@@ -80,6 +83,18 @@ func init() {
 }
 
 func main() {
+	// Connect to Redis DB.
+	redisClient = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	pong, err := redisClient.Ping().Result()
+	if err != nil || pong != "PONG" {
+		log.Panicf("[panic] Couldn't connect to Redis DB. %s", err)
+	}
+	log.Printf("Connected to Redis.")
+
 	// Init router.
 	router := httprouter.New()
 	router.GET("/productsrv", checkZoomAuthorization(indexHandler))

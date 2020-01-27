@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-go run *.go dev
+go build && ./freightsrv
