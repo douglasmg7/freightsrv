@@ -100,6 +100,14 @@ func main() {
 	signal.Notify(serverStopRequest, os.Interrupt)
 	go shutdown(server, serverStopRequest, serverStopFinish)
 
+	region, err := regionFromCEP("31-170-210")
+	if checkError(err) {
+		log.Printf("region error: %v", err)
+	} else {
+		log.Printf("Region: %s", region)
+	}
+	return
+
 	p := pack{
 		DestinyCEP: "35460000",
 		Weight:     1500,
