@@ -21,6 +21,7 @@ type viaCEPAddress struct {
 }
 
 func addressFromCEP(cep string) (viaCEPAddress, error) {
+	// log.Printf("addressFromCEP init: %v", cep)
 	address := viaCEPAddress{}
 
 	// Change to "00000000"
@@ -75,11 +76,22 @@ func regionFromState(state string) string {
 }
 
 // Get region from cep.
-func regionFromCEP(cep string) (string, error) {
+func regionFromCEP(cep string) (region string, err error) {
+	// Try cache.
+	if region = getCEPRegion(cep); region != "" {
+		return region, nil
+	}
+
+	// Retrive address.
 	address, err := addressFromCEP(cep)
 	if err != nil {
 		return "", err
 	}
 
-	return regionFromState(address.State), nil
+	// Retrive region.
+	if region = regionFromState(address.State); region != "" {
+		setCEPRegion(cep, region)
+	}
+
+	return region, nil
 }

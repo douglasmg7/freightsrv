@@ -5,6 +5,9 @@ import (
 )
 
 func TestCEP(t *testing.T) {
+	// Alredy check cep into redis_test.go.
+	t.SkipNow()
+
 	want := viaCEPAddress{
 		Cep:      "31170-210",
 		Street:   "Rua Deputado Bernardino de Sena Figueiredo",

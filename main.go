@@ -80,9 +80,7 @@ func init() {
 
 	// Log start.
 	log.Printf("Starting in %v mode (version %s)\n", mode, version)
-}
 
-func main() {
 	// Connect to Redis DB.
 	redisClient = redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
@@ -94,7 +92,9 @@ func main() {
 		log.Panicf("[panic] Couldn't connect to Redis DB. %s", err)
 	}
 	log.Printf("Connected to Redis.")
+}
 
+func main() {
 	// Init router.
 	router := httprouter.New()
 	router.GET("/productsrv", checkZoomAuthorization(indexHandler))
@@ -114,27 +114,6 @@ func main() {
 	serverStopRequest := make(chan os.Signal, 1)
 	signal.Notify(serverStopRequest, os.Interrupt)
 	go shutdown(server, serverStopRequest, serverStopFinish)
-
-	region, err := regionFromCEP("31-170-210")
-	if checkError(err) {
-		log.Printf("region error: %v", err)
-	} else {
-		log.Printf("Region: %s", region)
-	}
-	return
-
-	p := pack{
-		DestinyCEP: "35460000",
-		Weight:     1500,
-		Length:     20,
-		Height:     30,
-		Width:      40,
-	}
-	freights, err := correiosFreight(p)
-	if !checkError(err) {
-		log.Printf("Estimate freights: %+v", freights)
-	}
-	// testXML()
 
 	log.Printf("listen address: %s", address[1:])
 	// log.Fatal(http.ListenAndServe(address, newLogger(router)))
