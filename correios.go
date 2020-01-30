@@ -37,6 +37,7 @@ func (p *pack) Validate() error {
 	regCep := regexp.MustCompile(`^[0-9]{8}$`)
 
 	// Origin CEP.
+	p.OriginCEP = strings.ReplaceAll(p.OriginCEP, "-", "")
 	if p.OriginCEP == "" {
 		p.OriginCEP = CEP_ORIGIN
 	}
@@ -45,6 +46,7 @@ func (p *pack) Validate() error {
 	}
 
 	// Destiny CEP.
+	p.DestinyCEP = strings.ReplaceAll(p.DestinyCEP, "-", "")
 	if !regCep.MatchString(p.DestinyCEP) {
 		return fmt.Errorf("Destiny CEP \"%v\" invalid.", p.DestinyCEP)
 	}
