@@ -148,20 +148,21 @@ func TestRegionFromCEP(t *testing.T) {
 func TestFreightRegionDB(t *testing.T) {
 	now := time.Now()
 	nowFormated := now.Format(time.RFC3339)
+	// log.Printf("datetime: %v", nowFormated)
 
 	fr := freightRegion{
-		region:    "south",
-		weight:    4000,
-		deadline:  2,
-		price:     7845,
-		createdAt: now,
-		updatedAt: now,
+		Region:    "south",
+		Weight:    4000,
+		Deadline:  2,
+		Price:     7845,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	tx := sql3DB.MustBegin()
 	// Update.
 	uStatement := "UPDATE freight_region SET price=?, updated_at=? WHERE region=? AND weight=? AND deadline=?"
-	uResult := tx.MustExec(uStatement, fr.price, nowFormated, fr.region, fr.weight, fr.deadline)
+	uResult := tx.MustExec(uStatement, fr.Price, nowFormated, fr.Region, fr.Weight, fr.Deadline)
 	uRowsAffected, err := uResult.RowsAffected()
 	if err != nil {
 		t.Errorf("Updating freight_region table. %s", err)
@@ -170,7 +171,7 @@ func TestFreightRegionDB(t *testing.T) {
 	// Insert.
 	if uRowsAffected == 0 {
 		iStatement := "INSERT INTO freight_region(region, weight, deadline, price, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)"
-		iResult, err := tx.Exec(iStatement, fr.region, fr.weight, fr.deadline, fr.price, nowFormated, nowFormated)
+		iResult, err := tx.Exec(iStatement, fr.Region, fr.Weight, fr.Deadline, fr.Price, nowFormated, nowFormated)
 		if err != nil {
 			t.Errorf("Insert into freight_region table. %s", err)
 		}
@@ -189,12 +190,21 @@ func TestFreightRegionDB(t *testing.T) {
 	}
 
 	// Select.
-	frResult := freightRegion{}
-	err = sql3DB.QueryRow("SELECT * FROM freight_region WHERE region=? AND weight=? AND deadline=?", fr.region, fr.weight, fr.deadline).Scan(&frResult)
+	var frResult freightRegion
+	// err = sql3DB.Get(&frResult, "SELECT * FROM freight_region WHERE region=? AND weight=? AND deadline=?", fr.region, fr.weight, fr.deadline)
+	err = sql3DB.Get(&frResult, "SELECT * FROM freight_region")
 	if err != nil {
 		t.Errorf("Getting freight_region row. %s", err)
 	}
-	log.Printf("freightRegion: %+v", frResult)
+	// log.Printf("freightRegion: %+v", fr)
+	// log.Printf("freightRegion: %+v", frResult)
+
+	frUpdateAt := fr.UpdatedAt.Format(time.RFC3339)
+	frResultUpdatedAt := frResult.UpdatedAt.Format(time.RFC3339)
+
+	if frUpdateAt != frResultUpdatedAt {
+		t.Errorf("Getting updated freight_region, UpdatedAt: %s, want %s", frUpdateAt, frResultUpdatedAt)
+	}
 
 	// Not worked.
 	// strQuery := fmt.Sprintf("INSERT INTO freight_region(region, weight, deadline, price, created_at, updated_at) VALUES(\"%s\", %v, %v, %v, \"%s\", \"%s\")", fr.region, fr.weight, fr.deadline, fr.price, nowFormated, nowFormated)
