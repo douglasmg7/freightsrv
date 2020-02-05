@@ -14,19 +14,28 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v7"
+	"github.com/jmoiron/sqlx"
 	"github.com/julienschmidt/httprouter"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
+// Server address.
 var address string
 
 var err error
 var logPath string
+var initTime time.Time
+
+// Sqlite3.
+var sql3DBPath string
+var sql3DB *sqlx.DB
+
+// Redis.
+var redisClient *redis.Client
 
 // Development mode.
 var dev bool
-var initTime time.Time
-
-var redisClient *redis.Client
 
 // Brazil time location.
 var brLocation *time.Location
@@ -48,22 +57,18 @@ func init() {
 	// Listern address.
 	address = ":8084"
 
-	// Path for log.
-	zunkaPathdata := os.Getenv("ZUNKAPATH")
-	if zunkaPathdata == "" {
+	// Log path.
+	zunkaPath := os.Getenv("ZUNKAPATH")
+	if zunkaPath == "" {
 		panic("ZUNKAPATH not defined.")
 	}
-	logPath := path.Join(zunkaPathdata, "log", "freightsrv")
-
-	// Create path.
+	logPath := path.Join(zunkaPath, "log", "freightsrv")
 	os.MkdirAll(logPath, os.ModePerm)
-
-	// Log file.
+	// Open log file.
 	logFile, err := os.OpenFile(path.Join(logPath, "freightsrv.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
 	}
-
 	// Log configuration.
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
@@ -81,6 +86,15 @@ func init() {
 	// Log start.
 	log.Printf("Starting in %v mode (version %s)\n", mode, version)
 
+	// Sqlite3 DB.
+	zunkaFreightDB := os.Getenv("ZUNKA_FREIGHT_DB")
+	if zunkaFreightDB == "" {
+		panic("ZUNKA_FREIGHT_DB not defined.")
+	}
+	sql3DBPath = path.Join(zunkaPath, "db", zunkaFreightDB)
+}
+
+func initRedis() {
 	// Connect to Redis DB.
 	redisClient = redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
@@ -91,10 +105,31 @@ func init() {
 	if err != nil || pong != "PONG" {
 		log.Panicf("[panic] Couldn't connect to Redis DB. %s", err)
 	}
-	log.Printf("Connected to Redis.")
+	log.Printf("Connected to Redis")
+}
+func closeRedis() {
+	log.Printf("Closing Redis connection...")
+}
+
+func initSql3DB() {
+	sql3DB = sqlx.MustConnect("sqlite3", sql3DBPath)
+	log.Printf("Connected to Sqlite3")
+}
+
+func closeSql3DB() {
+	log.Printf("Closing Sqlite3 connection...")
+	sql3DB.Close()
 }
 
 func main() {
+	// Redis.
+	initRedis()
+	defer closeRedis()
+
+	// Sqlite3
+	initSql3DB()
+	defer closeSql3DB()
+
 	// Init router.
 	router := httprouter.New()
 	router.GET("/productsrv", checkZoomAuthorization(indexHandler))

@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS freight_region  (
     weight integer CHECK(weight>=100) not null,    -- g
     deadline integer CHECK(deadline>0) not null,  -- days
     price integer CHECK(price>0) not null,     -- R$ X 100
-    createdAt datetime not null,
-    updatedAt datetime not null,
-    UNIQUE (region, weight, deadline, price)
-);
+    created_at datetime not null,
+    updated_at datetime not null,
+    UNIQUE (region, weight, deadline)
+); 
+--  CREATE UNIQUE INDEX t1b ON freight_region(region, weight, deadline);
