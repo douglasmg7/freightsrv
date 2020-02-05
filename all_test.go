@@ -144,7 +144,6 @@ func TestRegionFromCEP(t *testing.T) {
 }
 
 // Freight region.
-// go test -run freightRegion, to run only this.
 func TestFreightRegionDB(t *testing.T) {
 	now := time.Now()
 	nowFormated := now.Format(time.RFC3339)
@@ -191,8 +190,8 @@ func TestFreightRegionDB(t *testing.T) {
 
 	// Select.
 	var frResult freightRegion
-	// err = sql3DB.Get(&frResult, "SELECT * FROM freight_region WHERE region=? AND weight=? AND deadline=?", fr.region, fr.weight, fr.deadline)
-	err = sql3DB.Get(&frResult, "SELECT * FROM freight_region")
+	err = sql3DB.Get(&frResult, "SELECT * FROM freight_region WHERE region=? AND weight=? AND deadline=?", fr.Region, fr.Weight, fr.Deadline)
+	// err = sql3DB.Get(&frResult, "SELECT * FROM freight_region")
 	if err != nil {
 		t.Errorf("Getting freight_region row. %s", err)
 	}
@@ -209,4 +208,30 @@ func TestFreightRegionDB(t *testing.T) {
 	// Not worked.
 	// strQuery := fmt.Sprintf("INSERT INTO freight_region(region, weight, deadline, price, created_at, updated_at) VALUES(\"%s\", %v, %v, %v, \"%s\", \"%s\")", fr.region, fr.weight, fr.deadline, fr.price, nowFormated, nowFormated)
 	// strQueryConflit := fmt.Sprintf("%s ON CONFLICT DO UPDATE SET price=%v", strQuery, fr.price)
+}
+
+var validFreightRegionId int
+
+func TestGetAllFreightRegion(t *testing.T) {
+	frS, err := getAllFreightRegion()
+	if err != nil {
+		t.Errorf("TestGetAllFreightRegion(). %s", err)
+	}
+	frSLen := len(frS)
+	if frSLen == 0 {
+		t.Errorf("freigh_region rows: %v, want > 0.", frSLen)
+	}
+	validFreightRegionId = frS[0].ID
+	// log.Printf("frS: %+v", frS)
+}
+
+func TestGetFreightRegionById(t *testing.T) {
+	fr, err := getFreightRegionById(validFreightRegionId)
+	if err != nil {
+		t.Errorf(" TestGetFreightRegionById(). %s", err)
+	}
+	if fr.Region == "" {
+		t.Errorf("region: %s, want not \"\".", fr.Region)
+	}
+	// log.Printf("fr: %+v", fr)
 }

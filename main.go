@@ -105,19 +105,19 @@ func initRedis() {
 	if err != nil || pong != "PONG" {
 		log.Panicf("[panic] Couldn't connect to Redis DB. %s", err)
 	}
-	log.Printf("Connected to Redis")
+	// log.Printf("Connected to Redis")
 }
 func closeRedis() {
-	log.Printf("Closing Redis connection...")
+	// log.Printf("Closing Redis connection...")
 }
 
 func initSql3DB() {
 	sql3DB = sqlx.MustConnect("sqlite3", sql3DBPath)
-	log.Printf("Connected to Sqlite3")
+	// log.Printf("Connected to Sqlite3")
 }
 
 func closeSql3DB() {
-	log.Printf("Closing Sqlite3 connection...")
+	// log.Printf("Closing Sqlite3 connection...")
 	sql3DB.Close()
 }
 
