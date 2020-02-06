@@ -36,6 +36,9 @@ func redisDel(key string) error {
 	return redisClient.Del(key).Err()
 }
 
+//****************************************************************************
+//	CEP
+//****************************************************************************
 // Set CEP region.
 func setCEPRegion(cep string, region string) {
 	cep = strings.ReplaceAll(cep, "-", "")

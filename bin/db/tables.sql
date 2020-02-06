@@ -5,22 +5,41 @@ pragma foreign_keys = on;
 
 -- Freight by region.
 CREATE TABLE IF NOT EXISTS freight_region  (
-    id integer primary key autoincrement,
-    region varchar(64) CHECK(region IN ('north', 'northeast', 'midwest', 'southeast', 'south')) not null,
-    weight integer CHECK(weight>=100) not null,    -- g
-    deadline integer CHECK(deadline>0) not null,  -- days
-    price integer CHECK(price>0) not null,     -- R$ X 100
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    region VARCHAR(64) CHECK(region IN ('north', 'northeast', 'midwest', 'southeast', 'south')) NOT NULL,
+    weight INTEGER CHECK(weight >= 100) NOT NULL,    -- g
+    deadline INTEGER CHECK(deadline > 0) NOT NULL,  -- days
+    price INTEGER CHECK(price>0) NOT NULL,     -- R$ X 100
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     --  updated_at timestamp NOT NULL DEFAULT (DATETIME('now', 'localtime')),
     --  created_at timestamp NOT NULL DEFAULT (DATETIME('now', 'localtime')),
     UNIQUE (region, weight, deadline)
 ); 
 
-CREATE TRIGGER freight_region_trigger_updated_time
-AFTER UPDATE On freight_region
+CREATE TRIGGER freight_region_trigger_updated_at
+AFTER UPDATE ON freight_region
 BEGIN
    UPDATE freight_region SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
    --  UPDATE freight_region SET timestamp = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW') WHERE id = NEW.id;
 END;
 --  CREATE UNIQUE INDEX t1b ON freight_region(region, weight, deadline);
+
+-- Motoboy freight.
+CREATE TABLE IF NOT EXISTS motoboy_freight  (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    state VARCHAR(64) CHECK(state IN ('mg')) NOT NULL DEFAULT 'mg',
+    city VARCHAR(64)  NOT NULL,
+    city_norm VARCHAR(64)  NOT NULL, -- Normalized city name.
+    deadline INTEGER CHECK(deadline > 0) NOT NULL,  -- days
+    price INTEGER CHECK(price > 0) NOT NULL,     -- R$ X 100
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (state, city_norm)
+); 
+
+CREATE TRIGGER motoboy_freight_trigger_updated_at
+AFTER UPDATE ON motoboy_freight
+BEGIN
+   UPDATE motoboy_freight SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;

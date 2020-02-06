@@ -36,6 +36,15 @@ func shutdownTest() {
 	closeSql3DB()
 }
 
+func Test_TextNormalization(t *testing.T) {
+	want := "aaacu a"
+	s := normalizeString("áàãçú â")
+	// log.Println("string: ", s)
+	if s != want {
+		t.Errorf("Received %s, want %s", s, want)
+	}
+}
+
 // CEP.
 func Test_CEP(t *testing.T) {
 	// Alredy check cep into redis_test.go.
@@ -146,7 +155,9 @@ func Test_RegionFromCEP(t *testing.T) {
 var validFreightRegionId int
 var fr freightRegion
 
-// Freight region.
+//*****************************************************************************
+// FREIGHT REGION
+//*****************************************************************************
 func Test_SaveFreightRegion(t *testing.T) {
 	fr = freightRegion{
 		Region:   "south",
@@ -197,6 +208,60 @@ func Test_GetAllFreightRegion(t *testing.T) {
 }
 
 func Test_GetFreightRegionById(t *testing.T) {
+	fr, err := getFreightRegionById(validFreightRegionId)
+	if err != nil {
+		t.Errorf(" TestGetFreightRegionById(). %s", err)
+	}
+	if fr.Region == "" {
+		t.Errorf("region: %s, want not \"\".", fr.Region)
+	}
+	// log.Printf("fr: %+v", fr)
+}
+
+//*****************************************************************************
+// MOTOBOY FREIGHT
+//*****************************************************************************
+var validMotoboyFreightCity string
+var mf motoboyFreight
+
+func Test_SaveMotoboyFreight(t *testing.T) {
+	mf = motoboyFreight{
+		City:     "Barão de Cocais",
+		Deadline: 2,
+		Price:    12570,
+	}
+
+	err := saveMotoboyFreight(&mf)
+	if err != nil {
+		t.Errorf("Saving freight region. %s", err)
+	}
+
+	// Check saved data.
+	var mfResult motoboyFreight
+	mfResult.City = "Barao de cocais"
+	err = getMotoboyFreight(&mfResult)
+	if err != nil {
+		t.Errorf("Getting freight_region row. %s", err)
+	}
+	if fr.Price != mfResult.Price {
+		t.Errorf("Getting updated freight_region, price: %v, want %v", mfResult.Price, fr.Price)
+	}
+}
+
+func Test_GetAllMotoboyFreight(t *testing.T) {
+	frS, err := getAllFreightRegion()
+	if err != nil {
+		t.Errorf("TestGetAllFreightRegion(). %s", err)
+	}
+	frSLen := len(frS)
+	if frSLen == 0 {
+		t.Errorf("freigh_region rows: %v, want > 0.", frSLen)
+	}
+	validFreightRegionId = frS[0].ID
+	// log.Printf("frS: %+v", frS)
+}
+
+func Test_GetMotoboyFreight(t *testing.T) {
 	fr, err := getFreightRegionById(validFreightRegionId)
 	if err != nil {
 		t.Errorf(" TestGetFreightRegionById(). %s", err)

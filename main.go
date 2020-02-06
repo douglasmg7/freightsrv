@@ -2,6 +2,12 @@ package main
 
 import (
 	"context"
+	"github.com/go-redis/redis/v7"
+	"github.com/jmoiron/sqlx"
+	"github.com/julienschmidt/httprouter"
+	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 	"io"
 	"log"
 	"net/http"
@@ -12,12 +18,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/go-redis/redis/v7"
-	"github.com/jmoiron/sqlx"
-	"github.com/julienschmidt/httprouter"
-
-	_ "github.com/mattn/go-sqlite3"
+	"unicode"
 )
 
 // Server address.
@@ -47,12 +48,27 @@ type freight struct {
 	DeadLine int     `xml:"deadLine"` // Days.
 }
 
+// Text normalization.
+var trans transform.Transformer
+
+func isMn(r rune) bool {
+	return unicode.Is(unicode.Mn, r) // Mn: nonspacing marks
+}
+
+func normalizeString(str string) string {
+	result, _, _ := transform.String(trans, str)
+	return result
+}
+
 func init() {
 	// Brazil location.
 	brLocation, err = time.LoadLocation("America/Sao_Paulo")
 	if err != nil {
 		panic(err)
 	}
+
+	// Text normalization.
+	trans = transform.Chain(norm.NFD, transform.RemoveFunc(isMn), norm.NFC)
 
 	// Listern address.
 	address = ":8084"
