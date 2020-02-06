@@ -30,3 +30,36 @@ func getFreightRegionById(id int) (fr freightRegion, err error) {
 	}
 	return fr, nil
 }
+
+func saveFreightRegion(fr freightRegion) error {
+	tx := sql3DB.MustBegin()
+	// Update.
+	uStatement := "UPDATE freight_region SET price=? WHERE region=? AND weight=? AND deadline=?"
+	uResult := tx.MustExec(uStatement, fr.Price, fr.Region, fr.Weight, fr.Deadline)
+	uRowsAffected, err := uResult.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// Insert.
+	if uRowsAffected == 0 {
+		iStatement := "INSERT INTO freight_region(region, weight, deadline, price) VALUES(?, ?, ?, ?)"
+		iResult, err := tx.Exec(iStatement, fr.Region, fr.Weight, fr.Deadline, fr.Price)
+		if err != nil {
+			return err
+		}
+		iRowsAffected, err := iResult.RowsAffected()
+		// log.Printf("iRowsAffected: %+v", iRowsAffected)
+		if err != nil {
+			return err
+		}
+		if iRowsAffected == 0 {
+			return fmt.Errorf("Inserting into freight_region table not affected any row.")
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("Commiting insert/update into freight_region table. %s", err)
+	}
+	return nil
+}

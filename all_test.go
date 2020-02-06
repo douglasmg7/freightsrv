@@ -37,7 +37,7 @@ func shutdownTest() {
 }
 
 // CEP.
-func TestCEP(t *testing.T) {
+func Test_CEP(t *testing.T) {
 	// Alredy check cep into redis_test.go.
 	t.SkipNow()
 
@@ -60,7 +60,7 @@ func TestCEP(t *testing.T) {
 }
 
 // Correios.
-func TestCorreios(t *testing.T) {
+func Test_Correios(t *testing.T) {
 	// testXML()
 	p := pack{
 		DestinyCEP: cepNortheast,
@@ -107,7 +107,7 @@ func TestCorreios(t *testing.T) {
 // }
 // // testXML()
 
-func TestRedis(t *testing.T) {
+func Test_Redis(t *testing.T) {
 	want := "Hello!"
 	key := "freightsrv-test"
 
@@ -122,7 +122,7 @@ func TestRedis(t *testing.T) {
 	}
 }
 
-func TestRegionFromCEP(t *testing.T) {
+func Test_RegionFromCEP(t *testing.T) {
 	// First time get from rest api.
 	want := "northeast"
 	result, err := regionFromCEP(cepNortheast)
@@ -143,66 +143,39 @@ func TestRegionFromCEP(t *testing.T) {
 	}
 }
 
+var validFreightRegionId int
+var fr freightRegion
+
 // Freight region.
-func TestFreightRegionDB(t *testing.T) {
-	now := time.Now()
-	nowFormated := now.Format(time.RFC3339)
-	// log.Printf("datetime: %v", nowFormated)
-
-	fr := freightRegion{
-		Region:    "south",
-		Weight:    4000,
-		Deadline:  2,
-		Price:     7845,
-		CreatedAt: now,
-		UpdatedAt: now,
+func Test_SaveFreightRegion(t *testing.T) {
+	fr = freightRegion{
+		Region:   "south",
+		Weight:   4000,
+		Deadline: 2,
+		Price:    7845,
 	}
 
-	tx := sql3DB.MustBegin()
-	// Update.
-	uStatement := "UPDATE freight_region SET price=?, updated_at=? WHERE region=? AND weight=? AND deadline=?"
-	uResult := tx.MustExec(uStatement, fr.Price, nowFormated, fr.Region, fr.Weight, fr.Deadline)
-	uRowsAffected, err := uResult.RowsAffected()
+	err := saveFreightRegion(fr)
 	if err != nil {
-		t.Errorf("Updating freight_region table. %s", err)
+		t.Errorf("Saving freight region. %s", err)
 	}
+	// log.Printf("updatedAt        : %+v", updatedAt)
+	// log.Printf("updatedAt        : %+s", updatedAt.Format(time.RFC3339))
 
-	// Insert.
-	if uRowsAffected == 0 {
-		iStatement := "INSERT INTO freight_region(region, weight, deadline, price, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?)"
-		iResult, err := tx.Exec(iStatement, fr.Region, fr.Weight, fr.Deadline, fr.Price, nowFormated, nowFormated)
-		if err != nil {
-			t.Errorf("Insert into freight_region table. %s", err)
-		}
-		iRowsAffected, err := iResult.RowsAffected()
-		// log.Printf("iRowsAffected: %+v", iRowsAffected)
-		if err != nil {
-			t.Errorf("Insert into freight_region table. %s", err)
-		}
-		if iRowsAffected == 0 {
-			t.Errorf("Insert into freight_region table not affected any row.")
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		t.Errorf("Commiting insert/update into freight_region table. %s", err)
-	}
-
-	// Select.
+	// Check saved data.
 	var frResult freightRegion
 	err = sql3DB.Get(&frResult, "SELECT * FROM freight_region WHERE region=? AND weight=? AND deadline=?", fr.Region, fr.Weight, fr.Deadline)
-	// err = sql3DB.Get(&frResult, "SELECT * FROM freight_region")
 	if err != nil {
 		t.Errorf("Getting freight_region row. %s", err)
 	}
-	// log.Printf("freightRegion: %+v", fr)
-	// log.Printf("freightRegion: %+v", frResult)
+	// log.Printf("frResult createdAt val: %+v", frResult.CreatedAt)
+	// log.Printf("frResult updatedAt val: %+v", frResult.UpdatedAt)
 
-	frUpdateAt := fr.UpdatedAt.Format(time.RFC3339)
-	frResultUpdatedAt := frResult.UpdatedAt.Format(time.RFC3339)
+	// log.Printf("frResult createdAt str: %+s", frResult.CreatedAt.Format(time.RFC3339))
+	// log.Printf("frResult updatedAt str: %+s", frResult.UpdatedAt.Format(time.RFC3339))
 
-	if frUpdateAt != frResultUpdatedAt {
-		t.Errorf("Getting updated freight_region, UpdatedAt: %s, want %s", frUpdateAt, frResultUpdatedAt)
+	if fr.Price != frResult.Price {
+		t.Errorf("Getting updated freight_region, price: %v, want %v", frResult.Price, fr.Price)
 	}
 
 	// Not worked.
@@ -210,9 +183,7 @@ func TestFreightRegionDB(t *testing.T) {
 	// strQueryConflit := fmt.Sprintf("%s ON CONFLICT DO UPDATE SET price=%v", strQuery, fr.price)
 }
 
-var validFreightRegionId int
-
-func TestGetAllFreightRegion(t *testing.T) {
+func Test_GetAllFreightRegion(t *testing.T) {
 	frS, err := getAllFreightRegion()
 	if err != nil {
 		t.Errorf("TestGetAllFreightRegion(). %s", err)
@@ -225,7 +196,7 @@ func TestGetAllFreightRegion(t *testing.T) {
 	// log.Printf("frS: %+v", frS)
 }
 
-func TestGetFreightRegionById(t *testing.T) {
+func Test_GetFreightRegionById(t *testing.T) {
 	fr, err := getFreightRegionById(validFreightRegionId)
 	if err != nil {
 		t.Errorf(" TestGetFreightRegionById(). %s", err)
