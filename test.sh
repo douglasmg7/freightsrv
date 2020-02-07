@@ -4,5 +4,4 @@ clear
 # go test
 # go test -run SaveFreightRegion
 
-go test -run TextNorma
-             
+go test -run Motoboy

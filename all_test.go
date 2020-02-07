@@ -152,12 +152,13 @@ func Test_RegionFromCEP(t *testing.T) {
 	}
 }
 
-var validFreightRegionId int
-var fr freightRegion
-
 //*****************************************************************************
 // FREIGHT REGION
 //*****************************************************************************
+var validFreightRegionId int
+var fr freightRegion
+
+// Save freight region.
 func Test_SaveFreightRegion(t *testing.T) {
 	fr = freightRegion{
 		Region:   "south",
@@ -194,6 +195,7 @@ func Test_SaveFreightRegion(t *testing.T) {
 	// strQueryConflit := fmt.Sprintf("%s ON CONFLICT DO UPDATE SET price=%v", strQuery, fr.price)
 }
 
+// Get all freight regions.
 func Test_GetAllFreightRegion(t *testing.T) {
 	frS, err := getAllFreightRegion()
 	if err != nil {
@@ -207,6 +209,7 @@ func Test_GetAllFreightRegion(t *testing.T) {
 	// log.Printf("frS: %+v", frS)
 }
 
+// Get freight region by id.
 func Test_GetFreightRegionById(t *testing.T) {
 	fr, err := getFreightRegionById(validFreightRegionId)
 	if err != nil {
@@ -218,12 +221,22 @@ func Test_GetFreightRegionById(t *testing.T) {
 	// log.Printf("fr: %+v", fr)
 }
 
+// Delete freight region.
+func Test_DelFreightRegion(t *testing.T) {
+	err := delFreightRegion(validFreightRegionId)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 //*****************************************************************************
 // MOTOBOY FREIGHT
 //*****************************************************************************
 var validMotoboyFreightCity string
+var validMotoboyFreightID int
 var mf motoboyFreight
 
+// Save motoboy freight.
 func Test_SaveMotoboyFreight(t *testing.T) {
 	mf = motoboyFreight{
 		City:     "Barão de Cocais",
@@ -234,40 +247,82 @@ func Test_SaveMotoboyFreight(t *testing.T) {
 	err := saveMotoboyFreight(&mf)
 	if err != nil {
 		t.Errorf("Saving freight region. %s", err)
+		return
 	}
 
 	// Check saved data.
-	var mfResult motoboyFreight
-	mfResult.City = "Barao de cocais"
+	mfResult := motoboyFreight{
+		City: "Barao de cocais",
+	}
 	err = getMotoboyFreight(&mfResult)
 	if err != nil {
-		t.Errorf("Getting freight_region row. %s", err)
+		t.Error(err)
+		return
 	}
-	if fr.Price != mfResult.Price {
-		t.Errorf("Getting updated freight_region, price: %v, want %v", mfResult.Price, fr.Price)
+	if mf.Price != mfResult.Price {
+		t.Errorf("Getting updated motoboy_freight, price: %v, want %v", mfResult.Price, mf.Price)
+		return
 	}
 }
 
+// Get all motoboy freight.
 func Test_GetAllMotoboyFreight(t *testing.T) {
-	frS, err := getAllFreightRegion()
+	sl, err := getAllMotoboyFreight()
 	if err != nil {
-		t.Errorf("TestGetAllFreightRegion(). %s", err)
+		t.Error(err)
+		return
 	}
-	frSLen := len(frS)
-	if frSLen == 0 {
-		t.Errorf("freigh_region rows: %v, want > 0.", frSLen)
+	if len(sl) == 0 {
+		t.Error("No returned row for motoboy_freight")
+		return
 	}
-	validFreightRegionId = frS[0].ID
-	// log.Printf("frS: %+v", frS)
+	// log.Printf("sl: %+v", sl)
+	validMotoboyFreightID = sl[0].ID
+	validMotoboyFreightCity = sl[0].City
 }
 
-func Test_GetMotoboyFreight(t *testing.T) {
-	fr, err := getFreightRegionById(validFreightRegionId)
+// Get motoboy freight by id.
+func Test_GetMotoboyFreightByID(t *testing.T) {
+	mf = motoboyFreight{
+		ID: validMotoboyFreightID,
+	}
+	err := getMotoboyFreight(&mf)
 	if err != nil {
-		t.Errorf(" TestGetFreightRegionById(). %s", err)
+		t.Error(err)
+		return
 	}
-	if fr.Region == "" {
-		t.Errorf("region: %s, want not \"\".", fr.Region)
+	if mf.City == "" {
+		t.Errorf("motoboy fregiht citiy = %s, want: %s.", mf.City, validMotoboyFreightCity)
+		return
 	}
-	// log.Printf("fr: %+v", fr)
+	// log.Printf("mf by id: %+v", mf)
 }
+
+// Get motoboy freight by city.
+func Test_GetMotoboyFreightByCity(t *testing.T) {
+	mf = motoboyFreight{
+		City: validMotoboyFreightCity,
+	}
+	err := getMotoboyFreight(&mf)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if mf.ID == 0 {
+		t.Errorf("motoboy fregiht ID = %d, want: %d.", mf.ID, validMotoboyFreightID)
+		return
+	}
+	// log.Printf("mf by city: %+v", mf)
+}
+
+// Delete motoboy freight.
+func Test_DelMotoboyFreight(t *testing.T) {
+	err := delMotoboyFreight(validMotoboyFreightID)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+//*****************************************************************************
+// TEST SERVER
+//*****************************************************************************

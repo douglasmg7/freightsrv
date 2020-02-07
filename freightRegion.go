@@ -63,3 +63,17 @@ func saveFreightRegion(fr freightRegion) error {
 	}
 	return nil
 }
+
+// Delete freight region.
+func delFreightRegion(id int) error {
+	stm := "DELETE FROM freight_region WHERE id=?"
+	result, err := sql3DB.Exec(stm, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("no one row was affected, deleting by id: %d from freight_region table", id)
+	}
+	return nil
+}

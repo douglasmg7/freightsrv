@@ -38,18 +38,21 @@ func getAllMotoboyFreight() (result []motoboyFreight, err error) {
 func getMotoboyFreight(mf *motoboyFreight) error {
 	// Find by ID.
 	if mf.ID != 0 {
-		err = sql3DB.Get(&fr, "SELECT * FROM motoboy_freight  WHERE id=?", mf.ID)
+		err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight  WHERE id=?", mf.ID)
 		if err != nil {
-			return fmt.Errorf("getMotoboyFreight(). %s", err.Error())
+			return fmt.Errorf("Getting motoboy_freight by ID. %s", err.Error())
 		}
 		return nil
 	}
+
+	// Find by city.
+	mf.State = "mg"
 	mf.NormalizeCity()
-	// Find by normalized city.
-	err = sql3DB.Get(&fr, "SELECT * FROM motoboy_freight  WHERE state=?, city_norm=?", "mg", mf.CityNorm)
+	err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight WHERE state=? AND city_norm=?", mf.State, mf.CityNorm)
 	if err != nil {
-		return fmt.Errorf("getMotoboyFreight(). %s", err.Error())
+		return fmt.Errorf("getting motoboy freight by city. %s", err.Error())
 	}
+	// log.Printf("mf: %+v", mf)
 	return nil
 }
 
@@ -58,8 +61,8 @@ func saveMotoboyFreight(mf *motoboyFreight) error {
 	mf.NormalizeCity()
 	tx := sql3DB.MustBegin()
 	// Update.
-	uStatement := "UPDATE motoboy_freight SET deadline=?, price=?, city=? WHERE state=mg AND city_norm=?"
-	uResult := tx.MustExec(uStatement, mf.Deadline, mf.Price, mf.City, mf.CityNorm)
+	uStatement := "UPDATE motoboy_freight SET deadline=?, price=?, city=? WHERE state=? AND city_norm=?"
+	uResult := tx.MustExec(uStatement, mf.Deadline, mf.Price, mf.City, "mg", mf.CityNorm)
 	uRowsAffected, err := uResult.RowsAffected()
 	if err != nil {
 		return err
@@ -84,6 +87,20 @@ func saveMotoboyFreight(mf *motoboyFreight) error {
 	err = tx.Commit()
 	if err != nil {
 		return fmt.Errorf("Commiting insert/update into motoboy_freight table. %s", err)
+	}
+	return nil
+}
+
+// Delete motoboy freight.
+func delMotoboyFreight(id int) error {
+	stm := "DELETE FROM motoboy_freight WHERE id=?"
+	result, err := sql3DB.Exec(stm, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if rowsAffected == 0 {
+		return fmt.Errorf("no one row was affected, deleting by id: %d from motoboy_freight table", id)
 	}
 	return nil
 }
