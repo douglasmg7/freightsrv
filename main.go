@@ -23,6 +23,7 @@ import (
 
 // Server address.
 var address string
+var router *httprouter.Router
 
 var err error
 var logPath string
@@ -108,6 +109,10 @@ func init() {
 		panic("ZUNKA_FREIGHT_DB not defined.")
 	}
 	sql3DBPath = path.Join(zunkaPath, "db", zunkaFreightDB)
+
+	// Init router.
+	router = httprouter.New()
+	router.GET("/productsrv", checkZoomAuthorization(indexHandler))
 }
 
 func initRedis() {
@@ -146,9 +151,9 @@ func main() {
 	initSql3DB()
 	defer closeSql3DB()
 
-	// Init router.
-	router := httprouter.New()
-	router.GET("/productsrv", checkZoomAuthorization(indexHandler))
+	// // Init router.
+	// router := httprouter.New()
+	// router.GET("/productsrv", checkZoomAuthorization(indexHandler))
 
 	// Create server.
 	server := &http.Server{

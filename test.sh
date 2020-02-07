@@ -4,4 +4,4 @@ clear
 # go test
 # go test -run SaveFreightRegion
 
-go test -run Motoboy
+go test -run Handler
