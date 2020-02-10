@@ -109,7 +109,7 @@ func init() {
 
 	// Init router.
 	router = httprouter.New()
-	router.GET("/productsrv", checkZoomAuthorization(indexHandler))
+	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 }
 
 func initRedis() {
@@ -204,6 +204,31 @@ func shutdown(server *http.Server, serverStopRequest <-chan os.Signal, serverSto
 /**************************************************************************************************
 * AUTHORIZATION MIDDLEWARE
 **************************************************************************************************/
+// Authorization.
+func checkAuthorization(h httprouter.Handle, users []string) httprouter.Handle {
+	return func(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
+		user, pass, ok := req.BasicAuth()
+
+		// Check if api is valid for this user.
+		for _, userValid := range users {
+			// Check if user is valid.
+			if userValid == user {
+				if checkUserPass(user, pass) {
+					h(w, req, p)
+					return
+				}
+			}
+		}
+
+		log.Printf("received  , %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
+		// Unauthorised.
+		w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your username and password for this service"`)
+		w.WriteHeader(401)
+		w.Write([]byte("Unauthorised\n"))
+		return
+	}
+}
+
 // Authorization.
 func checkZoomAuthorization(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, req *http.Request, p httprouter.Params) {

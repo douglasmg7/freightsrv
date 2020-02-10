@@ -5,4 +5,4 @@
 # go test -run SaveFreightRegion
 
 # go test -run Handler -args -dev=true
-go test -run Handler 
+go test -run Auth 
