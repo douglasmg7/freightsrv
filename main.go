@@ -2,12 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/go-redis/redis/v7"
-	"github.com/jmoiron/sqlx"
-	"github.com/julienschmidt/httprouter"
-	_ "github.com/mattn/go-sqlite3"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
+	"flag"
 	"io"
 	"log"
 	"net/http"
@@ -16,12 +11,19 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 	"unicode"
+
+	"github.com/go-redis/redis/v7"
+	"github.com/jmoiron/sqlx"
+	"github.com/julienschmidt/httprouter"
+	_ "github.com/mattn/go-sqlite3"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Server address.
+var runMode string
 var address string
 var router *httprouter.Router
 
@@ -36,8 +38,8 @@ var sql3DB *sqlx.DB
 // Redis.
 var redisClient *redis.Client
 
-// Development mode.
-var dev bool
+// Production mode.
+var production bool
 
 // Brazil time location.
 var brLocation *time.Location
@@ -62,6 +64,11 @@ func normalizeString(str string) string {
 }
 
 func init() {
+	// log.Printf("args: %+v", os.Args)
+
+	// Run mode.
+	flag.BoolVar(&production, "production", false, "Run mode not defined, use -production=true for production")
+
 	// Brazil location.
 	brLocation, err = time.LoadLocation("America/Sao_Paulo")
 	if err != nil {
@@ -92,16 +99,6 @@ func init() {
 	// log.SetFlags(log.LstdFlags)
 	// log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.SetFlags(log.Ldate | log.Lmicroseconds)
-
-	// Run mode.
-	mode := "production"
-	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "dev") {
-		dev = true
-		mode = "development"
-	}
-
-	// Log start.
-	log.Printf("Starting in %v mode (version %s)\n", mode, version)
 
 	// Sqlite3 DB.
 	zunkaFreightDB := os.Getenv("ZUNKA_FREIGHT_DB")
@@ -143,6 +140,16 @@ func closeSql3DB() {
 }
 
 func main() {
+	flag.Parse()
+	// log.Println("production:", production)
+
+	// Log start.
+	runMode := "development"
+	if production {
+		runMode = "production"
+	}
+	log.Printf("Running in %v mode (version %s)\n", runMode, version)
+
 	// Redis.
 	initRedis()
 	defer closeRedis()
@@ -205,8 +212,8 @@ func checkZoomAuthorization(h httprouter.Handle) httprouter.Handle {
 			h(w, req, p)
 			return
 		}
-		// log.Printf("try  , %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
-		// log.Printf("want , %v %v, user: %v, pass: %v", req.Method, req.URL.Path, zoomUser(), zoomPass())
+		log.Printf("try  , %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
+		log.Printf("want , %v %v, user: %v, pass: %v", req.Method, req.URL.Path, zoomUser(), zoomPass())
 		// Unauthorised.
 		w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your username and password for this service"`)
 		w.WriteHeader(401)

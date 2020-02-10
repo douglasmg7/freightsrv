@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-clear
+# clear
 [[ `systemctl status redis | awk '/Active/{print $2}'` == inactive ]] && sudo systemctl start redis
 # go test
 # go test -run SaveFreightRegion
 
-go test -run Handler
+# go test -run Handler -args -dev=true
+go test -run Handler 
