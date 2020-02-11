@@ -23,6 +23,36 @@ func getAllFreightRegion() (frS []freightRegion, err error) {
 	return frS, nil
 }
 
+// Get freight region by CEP.
+func getFreightRegionByCEP(cep string) (frs []freight, ok bool) {
+	region, err := getRegionByCEP(cep)
+	if checkError(err) {
+		return frs, false
+	}
+
+	// pmf, ok := getMotoboyFreightByLocation(address.State, address.City)
+	// // log.Printf("address: %+v", address)
+	// // log.Printf("pmf: %+v", *pmf)
+	// if !ok {
+	// return pfr, false
+	// }
+	// pfr = &freight{}
+	// pfr.Deadline = pmf.Deadline
+	// pfr.Price = float64(pmf.Price) / 100
+	// pfr.Carrier = "motoboy"
+	// return pfr, true
+}
+
+// Get region freight by region.
+func getFreightRegionByRegion(region string) (frs []freightRegion, ok bool) {
+	err = sql3DB.Select(frs, "SELECT * FROM freight_region WHERE region=?", region)
+	if checkError(err) {
+		return frs, false
+	}
+	return frs, true
+}
+
+// Get region freight by id.
 func getFreightRegionById(id int) (fr freightRegion, err error) {
 	err = sql3DB.Get(&fr, "SELECT * FROM freight_region WHERE id=?", id)
 	if err != nil {
