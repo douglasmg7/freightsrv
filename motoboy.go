@@ -25,6 +25,24 @@ func (mf *motoboyFreight) NormalizeCity() {
 	mf.CityNorm = normalizeString(reg.ReplaceAllString(s, `-`))
 }
 
+func getMotoboyFreightByCEP(cep string) (pfr *freight, ok bool) {
+	address, err := getAddressByCEP(cep)
+	if checkError(err) {
+		return pfr, false
+	}
+	pmf, ok := getMotoboyFreightByLocation(address.State, address.City)
+	// log.Printf("address: %+v", address)
+	// log.Printf("pmf: %+v", *pmf)
+	if !ok {
+		return pfr, false
+	}
+	pfr = &freight{}
+	pfr.Deadline = pmf.Deadline
+	pfr.Price = float64(pmf.Price) / 100
+	pfr.Carrier = "motoboy"
+	return pfr, true
+}
+
 // Get all motoboey feights.
 func getAllMotoboyFreight() (result []motoboyFreight, err error) {
 	err = sql3DB.Select(&result, "SELECT * FROM motoboy_freight ORDER BY state, city")
@@ -34,8 +52,37 @@ func getAllMotoboyFreight() (result []motoboyFreight, err error) {
 	return result, nil
 }
 
+// Get motoboy freight by id.
+func getMotoboyFreightByID(id int) (mf *motoboyFreight, ok bool) {
+	mf = &motoboyFreight{}
+	err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight  WHERE id=?", id)
+	if checkError(err) {
+		return mf, false
+	}
+	// log.Printf("by id, mf: %+v", *mf)
+	return mf, true
+}
+
+// Get motoboy freight by location.
+func getMotoboyFreightByLocation(state, city string) (mf *motoboyFreight, ok bool) {
+	// Only for Minas Gerais.
+	if strings.ToLower(state) != "mg" {
+		return mf, false
+	}
+	mf = &motoboyFreight{}
+	mf.State = "mg"
+	mf.City = city
+	mf.NormalizeCity()
+	err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight WHERE state=? AND city_norm=?", mf.State, mf.CityNorm)
+	if checkError(err) {
+		return mf, false
+	}
+	// log.Printf("by state and city, mf: %+v", *mf)
+	return mf, true
+}
+
 // Get motoboy freight.
-func getMotoboyFreight(mf *motoboyFreight) error {
+func getMotoboyFreightOld(mf *motoboyFreight) error {
 	// Find by ID.
 	if mf.ID != 0 {
 		err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight  WHERE id=?", mf.ID)

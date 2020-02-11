@@ -48,7 +48,7 @@ type freight struct {
 	Carrier  string  `xml:"carrier"`
 	Service  string  `xml:"service"`
 	Price    float64 `xml:"price"`
-	DeadLine int     `xml:"deadLine"` // Days.
+	Deadline int     `xml:"deadLine"` // Days.
 }
 
 // Text normalization.
@@ -110,6 +110,7 @@ func init() {
 	// Init router.
 	router = httprouter.New()
 	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
+	router.GET("/freightsrv/freights", checkAuthorization(freightsHandler, []string{"zunka", "zoom"}))
 }
 
 func initRedis() {
@@ -157,10 +158,6 @@ func main() {
 	// Sqlite3
 	initSql3DB()
 	defer closeSql3DB()
-
-	// // Init router.
-	// router := httprouter.New()
-	// router.GET("/productsrv", checkZoomAuthorization(indexHandler))
 
 	// Create server.
 	server := &http.Server{
@@ -210,57 +207,30 @@ func checkAuthorization(h httprouter.Handle, users []string) httprouter.Handle {
 		user, pass, ok := req.BasicAuth()
 
 		// Check if api is valid for this user.
-		for _, userValid := range users {
-			// Check if user is valid.
-			if userValid == user {
-				if checkUserPass(user, pass) {
-					h(w, req, p)
-					return
+		if ok {
+			// For test.
+			if !production && user == "bypass" && pass == "123456" {
+				h(w, req, p)
+				return
+
+			}
+			// Check if user exist.
+			for _, userValid := range users {
+				// Check if user is valid.
+				if userValid == user {
+					if checkUserPass(user, pass) {
+						h(w, req, p)
+						return
+					}
 				}
 			}
 		}
 
-		log.Printf("received  , %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
 		// Unauthorised.
+		// log.Printf("received  , %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
 		w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your username and password for this service"`)
 		w.WriteHeader(401)
 		w.Write([]byte("Unauthorised\n"))
-		return
-	}
-}
-
-// Authorization.
-func checkZoomAuthorization(h httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
-		user, pass, ok := req.BasicAuth()
-		if ok && user == zoomUser() && pass == zoomPass() {
-			h(w, req, p)
-			return
-		}
-		log.Printf("try  , %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
-		log.Printf("want , %v %v, user: %v, pass: %v", req.Method, req.URL.Path, zoomUser(), zoomPass())
-		// Unauthorised.
-		w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your username and password for this service"`)
-		w.WriteHeader(401)
-		w.Write([]byte("Unauthorised\n"))
-		return
-	}
-}
-
-// Authorization.
-func checkZunkaSiteAuthorization(h httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, req *http.Request, p httprouter.Params) {
-		user, pass, ok := req.BasicAuth()
-		if ok && user == zunkaSiteUser() && pass == zunkaSitePass() {
-			h(w, req, p)
-			return
-		}
-		log.Printf("Unauthorized access, %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
-		log.Printf("authorization      , %v %v, user: %v, pass: %v", req.Method, req.URL.Path, zunkaSiteUser(), zunkaSitePass())
-		// Unauthorised.
-		w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your username and password for this service"`)
-		w.WriteHeader(401)
-		w.Write([]byte("Unauthorised.\n"))
 		return
 	}
 }

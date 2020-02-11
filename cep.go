@@ -20,7 +20,8 @@ type viaCEPAddress struct {
 	State    string `json:"uf"`
 }
 
-func addressFromCEP(cep string) (viaCEPAddress, error) {
+// Get address by CEP.
+func getAddressByCEP(cep string) (viaCEPAddress, error) {
 	// log.Printf("addressFromCEP init: %v", cep)
 	address := viaCEPAddress{}
 
@@ -56,7 +57,7 @@ func addressFromCEP(cep string) (viaCEPAddress, error) {
 }
 
 // Get brazilian region from state.
-func regionFromState(state string) string {
+func getRegionByState(state string) string {
 	state = strings.TrimSpace(state)
 	state = strings.ToLower(state)
 
@@ -76,20 +77,20 @@ func regionFromState(state string) string {
 }
 
 // Get region from cep.
-func regionFromCEP(cep string) (region string, err error) {
+func getRegionByCEP(cep string) (region string, err error) {
 	// Try cache.
 	if region = getCEPRegion(cep); region != "" {
 		return region, nil
 	}
 
 	// Retrive address.
-	address, err := addressFromCEP(cep)
+	address, err := getAddressByCEP(cep)
 	if err != nil {
 		return "", err
 	}
 
 	// Retrive region.
-	if region = regionFromState(address.State); region != "" {
+	if region = getRegionByState(address.State); region != "" {
 		setCEPRegion(cep, region)
 	}
 

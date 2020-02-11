@@ -24,12 +24,12 @@ const (
 )
 
 type pack struct {
-	OriginCEP  string
-	DestinyCEP string
-	Weight     int // g.
-	Length     int // cm.
-	Height     int // cm.
-	Width      int // cm.
+	OriginCEP  string `json:"cepOrigin"`
+	DestinyCEP string `json:"cepDestiny"`
+	Weight     int    `json:"weight"` // g.
+	Length     int    `json:"length"` // cm.
+	Height     int    `json:"height"` // cm.
+	Width      int    `json:"width"`  // cm.
 }
 
 func (p *pack) Validate() error {
@@ -183,7 +183,7 @@ func correiosFreight(cPack pack) (freights []freight, err error) {
 			continue
 		}
 		// log.Printf("Price: %v", priceF)
-		freights = append(freights, freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, DeadLine: service.DeadLine})
+		freights = append(freights, freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, Deadline: service.DeadLine})
 	}
 
 	return freights, nil

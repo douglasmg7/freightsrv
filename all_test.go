@@ -46,7 +46,7 @@ func Test_TextNormalization(t *testing.T) {
 }
 
 // CEP.
-func Test_CEP(t *testing.T) {
+func TestCEP(t *testing.T) {
 	// Alredy check cep into redis_test.go.
 	t.SkipNow()
 
@@ -58,7 +58,7 @@ func Test_CEP(t *testing.T) {
 		State:    "MG",
 	}
 
-	address, err := addressFromCEP("3-1170210")
+	address, err := getAddressByCEP("3-1170210")
 	if checkError(err) {
 		t.Error(err)
 	}
@@ -69,7 +69,7 @@ func Test_CEP(t *testing.T) {
 }
 
 // Correios.
-func Test_Correios(t *testing.T) {
+func TestCorreios(t *testing.T) {
 	// testXML()
 	p := pack{
 		DestinyCEP: cepNortheast,
@@ -97,7 +97,7 @@ func Test_Correios(t *testing.T) {
 		if freight.Price <= 0 {
 			t.Errorf("Correios freight price must be more than 0")
 		}
-		if freight.DeadLine <= 0 {
+		if freight.Deadline <= 0 {
 			t.Errorf("Correios freight dead line must be more than 0")
 		}
 	}
@@ -116,7 +116,7 @@ func Test_Correios(t *testing.T) {
 // }
 // // testXML()
 
-func Test_Redis(t *testing.T) {
+func TestRedis(t *testing.T) {
 	want := "Hello!"
 	key := "freightsrv-test"
 
@@ -131,10 +131,10 @@ func Test_Redis(t *testing.T) {
 	}
 }
 
-func Test_RegionFromCEP(t *testing.T) {
+func TestRegionFromCEP(t *testing.T) {
 	// First time get from rest api.
 	want := "northeast"
-	result, err := regionFromCEP(cepNortheast)
+	result, err := getRegionByCEP(cepNortheast)
 	if err != nil {
 		t.Errorf("Getting region from CEP. %v", err)
 	}
@@ -143,7 +143,7 @@ func Test_RegionFromCEP(t *testing.T) {
 	}
 
 	// Second time get from cache.
-	result, err = regionFromCEP(cepNortheast)
+	result, err = getRegionByCEP(cepNortheast)
 	if err != nil {
 		t.Errorf("Getting region from CEP. %v", err)
 	}
@@ -159,7 +159,7 @@ var validFreightRegionId int
 var fr freightRegion
 
 // Save freight region.
-func Test_SaveFreightRegion(t *testing.T) {
+func TestSaveFreightRegion(t *testing.T) {
 	fr = freightRegion{
 		Region:   "south",
 		Weight:   4000,
@@ -196,7 +196,7 @@ func Test_SaveFreightRegion(t *testing.T) {
 }
 
 // Get all freight regions.
-func Test_GetAllFreightRegion(t *testing.T) {
+func TestGetAllFreightRegion(t *testing.T) {
 	frS, err := getAllFreightRegion()
 	if err != nil {
 		t.Errorf("TestGetAllFreightRegion(). %s", err)
@@ -210,7 +210,7 @@ func Test_GetAllFreightRegion(t *testing.T) {
 }
 
 // Get freight region by id.
-func Test_GetFreightRegionById(t *testing.T) {
+func TestGetFreightRegionById(t *testing.T) {
 	fr, err := getFreightRegionById(validFreightRegionId)
 	if err != nil {
 		t.Errorf(" TestGetFreightRegionById(). %s", err)
@@ -222,7 +222,7 @@ func Test_GetFreightRegionById(t *testing.T) {
 }
 
 // Delete freight region.
-func Test_DelFreightRegion(t *testing.T) {
+func TestDelFreightRegion(t *testing.T) {
 	err := delFreightRegion(validFreightRegionId)
 	if err != nil {
 		t.Error(err)
@@ -237,7 +237,7 @@ var validMotoboyFreightID int
 var mf motoboyFreight
 
 // Save motoboy freight.
-func Test_SaveMotoboyFreight(t *testing.T) {
+func TestSaveMotoboyFreight(t *testing.T) {
 	mf = motoboyFreight{
 		City:     "Barão de Cocais",
 		Deadline: 2,
@@ -250,23 +250,18 @@ func Test_SaveMotoboyFreight(t *testing.T) {
 		return
 	}
 
-	// Check saved data.
-	mfResult := motoboyFreight{
-		City: "Barao de cocais",
+	pmfr, ok := getMotoboyFreightByLocation("mg", "Barao de cocais")
+	if !ok {
+		t.Error("Motoboy freight returned not ok.")
 	}
-	err = getMotoboyFreight(&mfResult)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if mf.Price != mfResult.Price {
-		t.Errorf("Getting updated motoboy_freight, price: %v, want %v", mfResult.Price, mf.Price)
+	if mf.Price != pmfr.Price {
+		t.Errorf("Getting updated motoboy_freight, price: %v, want %v", pmfr.Price, mf.Price)
 		return
 	}
 }
 
 // Get all motoboy freight.
-func Test_GetAllMotoboyFreight(t *testing.T) {
+func TestGetAllMotoboyFreight(t *testing.T) {
 	sl, err := getAllMotoboyFreight()
 	if err != nil {
 		t.Error(err)
@@ -282,41 +277,55 @@ func Test_GetAllMotoboyFreight(t *testing.T) {
 }
 
 // Get motoboy freight by id.
-func Test_GetMotoboyFreightByID(t *testing.T) {
+func TestGetMotoboyFreightByID(t *testing.T) {
 	mf = motoboyFreight{
 		ID: validMotoboyFreightID,
 	}
-	err := getMotoboyFreight(&mf)
-	if err != nil {
-		t.Error(err)
+	pmf, ok := getMotoboyFreightByID(validMotoboyFreightID)
+	if !ok {
+		t.Error("Motoboy freight returned not ok.")
 		return
 	}
-	if mf.City == "" {
-		t.Errorf("motoboy fregiht citiy = %s, want: %s.", mf.City, validMotoboyFreightCity)
+	if pmf.City != validMotoboyFreightCity {
+		t.Errorf("Motoboy fregiht citiy = %s, want: %s.", pmf.City, validMotoboyFreightCity)
 		return
 	}
 	// log.Printf("mf by id: %+v", mf)
 }
 
-// Get motoboy freight by city.
-func Test_GetMotoboyFreightByCity(t *testing.T) {
+// Get motoboy freight by location.
+func TestGetMotoboyFreightByLocation(t *testing.T) {
 	mf = motoboyFreight{
 		City: validMotoboyFreightCity,
 	}
-	err := getMotoboyFreight(&mf)
-	if err != nil {
-		t.Error(err)
-		return
+	pmf, ok := getMotoboyFreightByLocation("MG", validMotoboyFreightCity)
+	if !ok {
+		t.Error("Motoboy freight returned not ok.")
 	}
-	if mf.ID == 0 {
-		t.Errorf("motoboy fregiht ID = %d, want: %d.", mf.ID, validMotoboyFreightID)
+
+	if pmf.ID == 0 {
+		t.Errorf("motoboy fregiht ID = %d, want: %d.", pmf.ID, validMotoboyFreightID)
 		return
 	}
 	// log.Printf("mf by city: %+v", mf)
 }
 
+// Get motoboy freight by location.
+func TestGetMotoboyFreightByCEP(t *testing.T) {
+	pmf, ok := getMotoboyFreightByCEP("31130210")
+	if !ok {
+		t.Error("Motoboy freight returned not ok.")
+	}
+
+	if pmf.Deadline == 0 {
+		t.Errorf("motoboy fregiht deadline = %d, want > 0.", pmf.Deadline)
+		return
+	}
+	// log.Printf("pmf by CEP: %+v", pmf)
+}
+
 // Delete motoboy freight.
-func Test_DelMotoboyFreight(t *testing.T) {
+func TestDelMotoboyFreight(t *testing.T) {
 	err := delMotoboyFreight(validMotoboyFreightID)
 	if err != nil {
 		t.Error(err)
