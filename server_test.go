@@ -84,7 +84,7 @@ func Test_InvalidPassAuth(t *testing.T) {
 }
 
 // Freight deadline and price.
-func TestFreight(t *testing.T) {
+func TestFreightAPI(t *testing.T) {
 	p := pack{
 		DestinyCEP: "5-76-25-000",
 		Weight:     1500, // g.

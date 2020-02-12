@@ -111,22 +111,27 @@ type correiosXMLResult struct {
 	Result  correiosXMLServices `xml:"Servicos"`
 }
 
-func correiosFreight(cPack pack) (freights []freight, err error) {
-	err = cPack.Validate()
+// Get correios freight by pack.
+func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
+	result := &freightsOk{
+		Freights: []*freight{},
+	}
+	err = p.Validate()
 	if err != nil {
-		return freights, err
+		c <- result
+		return
 	}
 
 	reqBody := []byte(`nCdEmpresa=` + CORREIOS_COMPANY_ADMIN_CODE +
 		`&sDsSenha=` + CORREIOS_COMPANY_PASSWORD +
 		`&nCdServico=` + CORREIOS_SERVICES_CODE +
-		`&sCepOrigem=` + cPack.OriginCEP +
-		`&sCepDestino=` + cPack.DestinyCEP +
-		`&nVlPeso=` + strconv.Itoa(cPack.Weight/1000) +
+		`&sCepOrigem=` + p.OriginCEP +
+		`&sCepDestino=` + p.DestinyCEP +
+		`&nVlPeso=` + strconv.Itoa(p.Weight/1000) +
 		`&nCdFormato=` + CORREIOS_PACKAGE_FORMAT +
-		`&nVlComprimento=` + strconv.Itoa(cPack.Length) +
-		`&nVlAltura=` + strconv.Itoa(cPack.Height) +
-		`&nVlLargura=` + strconv.Itoa(cPack.Width) +
+		`&nVlComprimento=` + strconv.Itoa(p.Length) +
+		`&nVlAltura=` + strconv.Itoa(p.Height) +
+		`&nVlLargura=` + strconv.Itoa(p.Width) +
 		`&nVlDiametro=` + CORREIOS_PACKAGE_DIAMETER +
 		`&sCdMaoPropria=` + CORREIOS_OWN_HAND +
 		`&nVlValorDeclarado=` + CORREIOS_DECLARED_VALUE +
@@ -139,40 +144,45 @@ func correiosFreight(cPack pack) (freights []freight, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", CORREIOS_URL, bytes.NewBuffer(reqBody))
 	if checkError(err) {
-		return freights, err
+		c <- result
+		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	start := time.Now()
 	res, err := client.Do(req)
 	if checkError(err) {
-		return freights, err
+		c <- result
+		return
 	}
 	log.Printf("[debug] Correios response time: %.1fs", time.Since(start).Seconds())
 
 	defer res.Body.Close()
 	if checkError(err) {
-		return freights, err
+		c <- result
+		return
 	}
 
 	// Result.
 	resBody, err := ioutil.ReadAll(res.Body)
 	if checkError(err) {
-		return freights, err
+		c <- result
+		return
 	}
 	// log.Println("resBody:", string(resBody))
 
-	result := correiosXMLResult{}
-	err = xml.Unmarshal(resBody, &result)
+	rCorreios := correiosXMLResult{}
+	err = xml.Unmarshal(resBody, &rCorreios)
 	if checkError(err) {
-		return freights, err
+		c <- result
+		return
 	}
 	// log.Printf("\n\nresult: %+v", result)
 
-	for _, service := range result.Result.Services {
+	for _, service := range rCorreios.Result.Services {
 		// log.Printf("service: %+v", service)
 		if service.Error != 0 {
-			log.Printf("[warning] [correios] origin: %s, destiny: %s, code: %d, error: %d, message: %v", cPack.OriginCEP, cPack.DestinyCEP, service.Code, service.Error, service.MsgError)
+			log.Printf("[warning] [correios] origin: %s, destiny: %s, code: %d, error: %d, message: %v", p.OriginCEP, p.DestinyCEP, service.Code, service.Error, service.MsgError)
 			continue
 		}
 		// Convert to float64.
@@ -183,11 +193,90 @@ func correiosFreight(cPack pack) (freights []freight, err error) {
 			continue
 		}
 		// log.Printf("Price: %v", priceF)
-		freights = append(freights, freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, Deadline: service.DeadLine})
+		result.Freights = append(result.Freights, &freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, Deadline: service.DeadLine})
 	}
-
-	return freights, nil
+	// log.Printf("result: %+v", result)
+	result.Ok = true
+	c <- result
 }
+
+// func getCorreiosFreightByPack(cPack pack) (freights []freight, err error) {
+// err = cPack.Validate()
+// if err != nil {
+// return freights, err
+// }
+
+// reqBody := []byte(`nCdEmpresa=` + CORREIOS_COMPANY_ADMIN_CODE +
+// `&sDsSenha=` + CORREIOS_COMPANY_PASSWORD +
+// `&nCdServico=` + CORREIOS_SERVICES_CODE +
+// `&sCepOrigem=` + cPack.OriginCEP +
+// `&sCepDestino=` + cPack.DestinyCEP +
+// `&nVlPeso=` + strconv.Itoa(cPack.Weight/1000) +
+// `&nCdFormato=` + CORREIOS_PACKAGE_FORMAT +
+// `&nVlComprimento=` + strconv.Itoa(cPack.Length) +
+// `&nVlAltura=` + strconv.Itoa(cPack.Height) +
+// `&nVlLargura=` + strconv.Itoa(cPack.Width) +
+// `&nVlDiametro=` + CORREIOS_PACKAGE_DIAMETER +
+// `&sCdMaoPropria=` + CORREIOS_OWN_HAND +
+// `&nVlValorDeclarado=` + CORREIOS_DECLARED_VALUE +
+// `&sCdAvisoRecebimento=` + CORREIOS_ACKNOWLEDGMENT_RECEIPT)
+
+// // Log request.
+// // log.Println("request body: " + string(reqBody))
+
+// // Request product add.
+// client := &http.Client{}
+// req, err := http.NewRequest("POST", CORREIOS_URL, bytes.NewBuffer(reqBody))
+// if checkError(err) {
+// return freights, err
+// }
+// req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+// start := time.Now()
+// res, err := client.Do(req)
+// if checkError(err) {
+// return freights, err
+// }
+// log.Printf("[debug] Correios response time: %.1fs", time.Since(start).Seconds())
+
+// defer res.Body.Close()
+// if checkError(err) {
+// return freights, err
+// }
+
+// // Result.
+// resBody, err := ioutil.ReadAll(res.Body)
+// if checkError(err) {
+// return freights, err
+// }
+// // log.Println("resBody:", string(resBody))
+
+// result := correiosXMLResult{}
+// err = xml.Unmarshal(resBody, &result)
+// if checkError(err) {
+// return freights, err
+// }
+// // log.Printf("\n\nresult: %+v", result)
+
+// for _, service := range result.Result.Services {
+// // log.Printf("service: %+v", service)
+// if service.Error != 0 {
+// log.Printf("[warning] [correios] origin: %s, destiny: %s, code: %d, error: %d, message: %v", cPack.OriginCEP, cPack.DestinyCEP, service.Code, service.Error, service.MsgError)
+// continue
+// }
+// // Convert to float64.
+// price := strings.ReplaceAll(service.Price, ".", "")
+// price = strings.ReplaceAll(service.Price, ",", ".")
+// priceF, err := strconv.ParseFloat(price, 64)
+// if checkError(err) {
+// continue
+// }
+// // log.Printf("Price: %v", priceF)
+// freights = append(freights, freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, Deadline: service.DeadLine})
+// }
+
+// return freights, nil
+// }
 
 func testXML() {
 	testString := []byte(`<cResultado>

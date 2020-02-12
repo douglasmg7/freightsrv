@@ -45,8 +45,26 @@ func Test_TextNormalization(t *testing.T) {
 	}
 }
 
-// CEP.
-func TestCEP(t *testing.T) {
+func TestRedis(t *testing.T) {
+	want := "Hello!"
+	key := "freightsrv-test"
+
+	err := redisSet(key, want, time.Second*10)
+	if err != nil {
+		t.Errorf("Saving on redis DB. %v", err)
+	}
+
+	result := redisGet(key)
+	if result != want {
+		t.Errorf("result = %q, want %q", result, want)
+	}
+}
+
+//*****************************************************************************
+// CEP
+//*****************************************************************************
+// Get address by CEP.
+func TestGetAddressByCEP(t *testing.T) {
 	// Alredy check cep into redis_test.go.
 	t.SkipNow()
 
@@ -68,70 +86,8 @@ func TestCEP(t *testing.T) {
 	}
 }
 
-// Correios.
-func TestCorreios(t *testing.T) {
-	// testXML()
-	p := pack{
-		DestinyCEP: cepNortheast,
-		Weight:     1500, // g.
-		Length:     20,   // cm.
-		Height:     30,   // cm.
-		Width:      40,   // cm.
-	}
-	freights, err := correiosFreight(p)
-	if checkError(err) {
-		t.Errorf("correiosFreight() returned error. %v", err)
-	}
-	// log.Printf("Estimate freights: %+v", freights)
-
-	for _, freight := range freights {
-		result := freight.Carrier
-		// Carrier.
-		want := "Correios"
-		if freight.Carrier != want {
-			t.Errorf("Coerreios freight carrier name, result = %q, want %q", result, want)
-		}
-		if freight.Service == "" {
-			t.Errorf("Correios freight service code must be != \"\"")
-		}
-		if freight.Price <= 0 {
-			t.Errorf("Correios freight price must be more than 0")
-		}
-		if freight.Deadline <= 0 {
-			t.Errorf("Correios freight dead line must be more than 0")
-		}
-	}
-}
-
-// p := pack{
-// DestinyCEP: "35460000",
-// Weight:     1500,
-// Length:     20,
-// Height:     30,
-// Width:      40,
-// }
-// freights, err := correiosFreight(p)
-// if !checkError(err) {
-// log.Printf("Estimate freights: %+v", freights)
-// }
-// // testXML()
-
-func TestRedis(t *testing.T) {
-	want := "Hello!"
-	key := "freightsrv-test"
-
-	err := redisSet(key, want, time.Second*10)
-	if err != nil {
-		t.Errorf("Saving on redis DB. %v", err)
-	}
-
-	result := redisGet(key)
-	if result != want {
-		t.Errorf("result = %q, want %q", result, want)
-	}
-}
-
-func TestRegionFromCEP(t *testing.T) {
+// Get region by CEP.
+func TestGetRegionByCEP(t *testing.T) {
 	// First time get from rest api.
 	want := "northeast"
 	result, err := getRegionByCEP(cepNortheast)
@@ -149,6 +105,46 @@ func TestRegionFromCEP(t *testing.T) {
 	}
 	if result != want {
 		t.Errorf("result = %q, want %q", result, want)
+	}
+}
+
+//*****************************************************************************
+// CORREIOS
+//*****************************************************************************
+// Get Correios freight by pack.
+func TestGetCorreiosFreightByPack(t *testing.T) {
+	// testXML()
+	p := &pack{
+		DestinyCEP: cepNortheast,
+		Weight:     1500, // g.
+		Length:     20,   // cm.
+		Height:     30,   // cm.
+		Width:      40,   // cm.
+	}
+
+	c := make(chan *freightsOk)
+	go getCorreiosFreightByPack(c, p)
+	frsOk := <-c
+
+	if !frsOk.Ok {
+		t.Errorf("getCorreiosFreightByPack() not returned ok.")
+	}
+
+	for _, pFreight := range frsOk.Freights {
+		// log.Printf("Correios freight: %+v", *pFreight)
+		want := "Correios"
+		if pFreight.Carrier != want {
+			t.Errorf("Correios freight carrier name, carrier = %q, want %q", pFreight.Carrier, want)
+		}
+		if pFreight.Service == "" {
+			t.Errorf("Correios freight service code must be != \"\"")
+		}
+		if pFreight.Price <= 0 {
+			t.Errorf("Correios freight price must be more than 0")
+		}
+		if pFreight.Deadline <= 0 {
+			t.Errorf("Correios freight dead line must be more than 0")
+		}
 	}
 }
 
@@ -207,6 +203,45 @@ func TestGetAllFreightRegion(t *testing.T) {
 	}
 	validFreightRegionId = frS[0].ID
 	// log.Printf("frS: %+v", frS)
+}
+
+// Get freight region by region and weight.
+func TestGetFreightRegionByRegionAndWeight(t *testing.T) {
+	frs, ok := getFreightRegionByRegionAndWeight("south", 3000)
+	if !ok {
+		t.Errorf("getFreightRegionByRegionAndWeight() returned not ok.")
+	}
+	if len(frs) == 0 {
+		t.Errorf("getFreightRegionByRegionAndWeight() returned no one freight region.")
+	}
+	// All freight region must return the same weight.
+	wantWeight := frs[0].Weight
+	for _, fr := range frs {
+		if fr.Weight != wantWeight {
+			t.Errorf("Getting freight region by region and weight, weight: %v, want %v", fr.Weight, wantWeight)
+		}
+	}
+	// log.Printf("frs: %+v", frs)
+}
+
+// Get freight region by CEP and wight.
+func TestGetFreightRegionByCEPAndWeight(t *testing.T) {
+	c := make(chan *freightsOk)
+	go getFreightRegionByCEPAndWeight(c, "31-170210", 3000)
+	frsOk := <-c
+	if !frsOk.Ok {
+		t.Errorf("getFreightRegionByCEPAndWeight() returned not ok.")
+	}
+	if len(frsOk.Freights) == 0 {
+		t.Errorf("getFreightRegionByCEPAndWeight() returned no one freight.")
+	}
+	// Must have a valid price.
+	for _, pFr := range frsOk.Freights {
+		// log.Printf("region freight: %+v", *pFr)
+		if pFr.Price <= 0 {
+			t.Errorf("Getting freight region by CEP and weight, Price must be > 0")
+		}
+	}
 }
 
 // Get freight region by id.
@@ -312,16 +347,19 @@ func TestGetMotoboyFreightByLocation(t *testing.T) {
 
 // Get motoboy freight by location.
 func TestGetMotoboyFreightByCEP(t *testing.T) {
-	pmf, ok := getMotoboyFreightByCEP("31130210")
-	if !ok {
+	c := make(chan *freightsOk)
+	go getMotoboyFreightByCEP(c, "31130210")
+
+	frsOk := <-c
+	if !frsOk.Ok {
 		t.Error("Motoboy freight returned not ok.")
 	}
 
-	if pmf.Deadline == 0 {
-		t.Errorf("motoboy fregiht deadline = %d, want > 0.", pmf.Deadline)
+	if frsOk.Freights[0].Deadline == 0 {
+		t.Errorf("motoboy fregiht deadline = 0, want > 0.")
 		return
 	}
-	// log.Printf("pmf by CEP: %+v", pmf)
+	// log.Printf("*frsOk.Freights[0]: %+v", *frsOk.Freights[0])
 }
 
 // Delete motoboy freight.

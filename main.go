@@ -51,6 +51,11 @@ type freight struct {
 	Deadline int     `xml:"deadLine"` // Days.
 }
 
+type freightsOk struct {
+	Freights []*freight
+	Ok       bool
+}
+
 // Text normalization.
 var trans transform.Transformer
 

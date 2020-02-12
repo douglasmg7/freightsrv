@@ -48,17 +48,39 @@ func freightsHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Par
 	}
 	// log.Printf("pack: %+v", p)
 
-	// Correios.
-	cFreights, err := correiosFreight(p)
-	log.Printf("correios freights: %+v", cFreights)
+	// Correios
+	cCorreios := make(chan *freightsOk)
+	go getCorreiosFreightByPack(cCorreios, &p)
 
 	// Motoboy.
-	mFreight, ok := getMotoboyFreightByCEP(p.OriginCEP)
-	if ok {
-		log.Printf("motoboy freight: %+v", mFreight)
+	cMotoboy := make(chan *freightsOk)
+	go getMotoboyFreightByCEP(cMotoboy, p.OriginCEP)
+
+	// Region.
+	cRegion := make(chan *freightsOk)
+	go getFreightRegionByCEPAndWeight(cRegion, p.OriginCEP, p.Weight)
+
+	frsOkMotoboy, frsOkCorreios, frsOkRegion := <-cMotoboy, <-cCorreios, <-cRegion
+
+	// Correios result.
+	if frsOkCorreios.Ok {
+		for _, pfr := range frsOkCorreios.Freights {
+			log.Printf("Correio freight: %+v", *pfr)
+		}
 	}
 
-	// Default.
+	// Motoboy result.
+	if frsOkMotoboy.Ok {
+		// Motoboy return only one freight.
+		log.Printf("Motoboy freight: %+v", *frsOkMotoboy.Freights[0])
+	}
+
+	// Region result.
+	if frsOkRegion.Ok {
+		for _, pfr := range frsOkRegion.Freights {
+			log.Printf("Region freight: %+v", *pfr)
+		}
+	}
 
 	w.WriteHeader(200)
 	w.Write([]byte("Some value\n"))

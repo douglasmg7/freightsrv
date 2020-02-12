@@ -8,9 +8,11 @@ INSERT INTO freight_region(region, weight, deadline, price) VALUES ("northeast",
 INSERT INTO freight_region(region, weight, deadline, price) VALUES ("midwest", 4000, 5, 7500);
 INSERT INTO freight_region(region, weight, deadline, price) VALUES ("midwest", 100000, 5, 9500);
 
+INSERT INTO freight_region(region, weight, deadline, price) VALUES ("southeast", 4000, 2, 8360);
 INSERT INTO freight_region(region, weight, deadline, price) VALUES ("southeast", 4000, 5, 5000);
 INSERT INTO freight_region(region, weight, deadline, price) VALUES ("southeast", 100000, 5, 7000);
 
+INSERT INTO freight_region(region, weight, deadline, price) VALUES ("south", 4000, 3, 3040);
 INSERT INTO freight_region(region, weight, deadline, price) VALUES ("south", 4000, 5, 5000);
 INSERT INTO freight_region(region, weight, deadline, price) VALUES ("south", 100000, 10, 7000);
 

@@ -25,23 +25,53 @@ func (mf *motoboyFreight) NormalizeCity() {
 	mf.CityNorm = normalizeString(reg.ReplaceAllString(s, `-`))
 }
 
-func getMotoboyFreightByCEP(cep string) (pfr *freight, ok bool) {
+// Get motoboy freight by CEP.
+func getMotoboyFreightByCEP(c chan *freightsOk, cep string) {
+	result := &freightsOk{
+		Freights: []*freight{},
+	}
+
 	address, err := getAddressByCEP(cep)
 	if checkError(err) {
-		return pfr, false
+		c <- result
+		return
 	}
 	pmf, ok := getMotoboyFreightByLocation(address.State, address.City)
 	// log.Printf("address: %+v", address)
 	// log.Printf("pmf: %+v", *pmf)
 	if !ok {
-		return pfr, false
+		c <- result
+		return
 	}
-	pfr = &freight{}
-	pfr.Deadline = pmf.Deadline
-	pfr.Price = float64(pmf.Price) / 100
-	pfr.Carrier = "motoboy"
-	return pfr, true
+
+	fr := freight{}
+	fr.Deadline = pmf.Deadline
+	fr.Price = float64(pmf.Price) / 100
+	fr.Carrier = "Motoboy"
+
+	result.Freights = append(result.Freights, &fr)
+	result.Ok = true
+
+	c <- result
 }
+
+// func getMotoboyFreightByCEP(cep string) (pfr *freight, ok bool) {
+// address, err := getAddressByCEP(cep)
+// if checkError(err) {
+// return pfr, false
+// }
+// pmf, ok := getMotoboyFreightByLocation(address.State, address.City)
+// // log.Printf("address: %+v", address)
+// // log.Printf("pmf: %+v", *pmf)
+// if !ok {
+// return pfr, false
+// }
+// pfr = &freight{}
+// pfr.Deadline = pmf.Deadline
+// pfr.Price = float64(pmf.Price) / 100
+// pfr.Carrier = "motoboy"
+// return pfr, true
+// }
 
 // Get all motoboey feights.
 func getAllMotoboyFreight() (result []motoboyFreight, err error) {

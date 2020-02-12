@@ -23,32 +23,75 @@ func getAllFreightRegion() (frS []freightRegion, err error) {
 	return frS, nil
 }
 
-// Get freight region by CEP.
-func getFreightRegionByCEP(cep string) (frs []freight, ok bool) {
+// Get freight region by CEP and weight.
+func getFreightRegionByCEPAndWeight(c chan *freightsOk, cep string, weight int) {
+	result := &freightsOk{
+		Freights: []*freight{},
+	}
+
 	region, err := getRegionByCEP(cep)
 	if checkError(err) {
-		return frs, false
+		c <- result
+		return
 	}
 
-	// pmf, ok := getMotoboyFreightByLocation(address.State, address.City)
-	// // log.Printf("address: %+v", address)
-	// // log.Printf("pmf: %+v", *pmf)
-	// if !ok {
-	// return pfr, false
-	// }
-	// pfr = &freight{}
-	// pfr.Deadline = pmf.Deadline
-	// pfr.Price = float64(pmf.Price) / 100
-	// pfr.Carrier = "motoboy"
-	// return pfr, true
+	frrs, ok := getFreightRegionByRegionAndWeight(region, weight)
+	// log.Printf("frrs: %+v", frrs)
+	if !ok {
+		c <- result
+		return
+	}
+
+	for i, frr := range frrs {
+		fr := freight{
+			Carrier:  fmt.Sprintf("Transportadora %d", i+1),
+			Deadline: frr.Deadline,
+			Price:    float64(frr.Price) / 100,
+		}
+		result.Freights = append(result.Freights, &fr)
+	}
+	result.Ok = true
+	c <- result
 }
 
+// func getFreightRegionByCEPAndWeight(cep string, weight int) (frs []freight, ok bool) {
+// region, err := getRegionByCEP(cep)
+// if checkError(err) {
+// return frs, false
+// }
+
+// frrs, ok := getFreightRegionByRegionAndWeight(region, weight)
+// // log.Printf("frrs: %+v", frrs)
+// if !ok {
+// return frs, false
+// }
+
+// for i, frr := range frrs {
+// fr := freight{
+// Carrier:  fmt.Sprintf("Transportadora %d", i+1),
+// Deadline: frr.Deadline,
+// Price:    float64(frr.Price) / 100,
+// }
+// frs = append(frs, fr)
+// }
+// return frs, true
+// }
+
 // Get region freight by region.
-func getFreightRegionByRegion(region string) (frs []freightRegion, ok bool) {
-	err = sql3DB.Select(frs, "SELECT * FROM freight_region WHERE region=?", region)
+func getFreightRegionByRegionAndWeight(region string, weight int) (frs []freightRegion, ok bool) {
+	var weightSel int
+	// Get min weight freight for current weight.
+	err = sql3DB.Get(&weightSel, "SELECT MIN(weight) FROM freight_region WHERE region=? AND weight>=? ORDER BY deadline", region, weight)
 	if checkError(err) {
 		return frs, false
 	}
+	// log.Printf("weightSel: %v", weightSel)
+
+	err = sql3DB.Select(&frs, "SELECT * FROM freight_region WHERE region=? AND weight==? ORDER BY deadline", region, weightSel)
+	if checkError(err) {
+		return frs, false
+	}
+	// log.Printf("getFreightRegionByRegionAndWeight: %+v", frs)
 	return frs, true
 }
 
