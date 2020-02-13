@@ -55,24 +55,6 @@ func getMotoboyFreightByCEP(c chan *freightsOk, cep string) {
 	c <- result
 }
 
-// func getMotoboyFreightByCEP(cep string) (pfr *freight, ok bool) {
-// address, err := getAddressByCEP(cep)
-// if checkError(err) {
-// return pfr, false
-// }
-// pmf, ok := getMotoboyFreightByLocation(address.State, address.City)
-// // log.Printf("address: %+v", address)
-// // log.Printf("pmf: %+v", *pmf)
-// if !ok {
-// return pfr, false
-// }
-// pfr = &freight{}
-// pfr.Deadline = pmf.Deadline
-// pfr.Price = float64(pmf.Price) / 100
-// pfr.Carrier = "motoboy"
-// return pfr, true
-// }
-
 // Get all motoboey feights.
 func getAllMotoboyFreight() (result []motoboyFreight, err error) {
 	err = sql3DB.Select(&result, "SELECT * FROM motoboy_freight ORDER BY state, city")

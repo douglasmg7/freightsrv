@@ -22,6 +22,13 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
+type Client int
+
+const (
+	Zunka Client = iota
+	Zoom
+)
+
 // Server address.
 var runMode string
 var address string
@@ -49,6 +56,12 @@ type freight struct {
 	Service  string  `xml:"service"`
 	Price    float64 `xml:"price"`
 	Deadline int     `xml:"deadLine"` // Days.
+}
+
+type freightInfo struct {
+	Carrier  string  `json:"carrier"`
+	Price    float64 `json:"price"`
+	Deadline int     `json:"deadLine"` // Days.
 }
 
 type freightsOk struct {
@@ -115,7 +128,8 @@ func init() {
 	// Init router.
 	router = httprouter.New()
 	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
-	router.GET("/freightsrv/freights", checkAuthorization(freightsHandler, []string{"zunka", "zoom"}))
+	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunka"}))
+	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
 }
 
 func initRedis() {

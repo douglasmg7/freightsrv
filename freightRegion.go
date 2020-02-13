@@ -54,38 +54,21 @@ func getFreightRegionByCEPAndWeight(c chan *freightsOk, cep string, weight int) 
 	c <- result
 }
 
-// func getFreightRegionByCEPAndWeight(cep string, weight int) (frs []freight, ok bool) {
-// region, err := getRegionByCEP(cep)
-// if checkError(err) {
-// return frs, false
-// }
-
-// frrs, ok := getFreightRegionByRegionAndWeight(region, weight)
-// // log.Printf("frrs: %+v", frrs)
-// if !ok {
-// return frs, false
-// }
-
-// for i, frr := range frrs {
-// fr := freight{
-// Carrier:  fmt.Sprintf("Transportadora %d", i+1),
-// Deadline: frr.Deadline,
-// Price:    float64(frr.Price) / 100,
-// }
-// frs = append(frs, fr)
-// }
-// return frs, true
-// }
-
 // Get region freight by region.
 func getFreightRegionByRegionAndWeight(region string, weight int) (frs []freightRegion, ok bool) {
 	var weightSel int
 	// Get min weight freight for current weight.
-	err = sql3DB.Get(&weightSel, "SELECT MIN(weight) FROM freight_region WHERE region=? AND weight>=? ORDER BY deadline", region, weight)
+	// log.Printf("SELECT MIN(weight) FROM freight_region WHERE region=%s AND weight>=%d ORDER BY deadline", region, weight)
+	// err = sql3DB.Get(&weightSel, "SELECT MIN(weight) FROM freight_region WHERE region=? AND weight>=? ORDER BY deadline", region, weight)
+	err = sql3DB.Get(&weightSel, "SELECT CASE WHEN MIN(weight) IS NULL THEN 0 ELSE MIN(weight) END FROM freight_region WHERE region==? AND weight>=? ORDER BY deadline;", region, weight)
 	if checkError(err) {
 		return frs, false
 	}
 	// log.Printf("weightSel: %v", weightSel)
+	// NULL from sqlite, no record for selected region and weight.
+	if weightSel == 0 {
+		return frs, false
+	}
 
 	err = sql3DB.Select(&frs, "SELECT * FROM freight_region WHERE region=? AND weight==? ORDER BY deadline", region, weightSel)
 	if checkError(err) {

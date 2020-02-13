@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -83,14 +85,25 @@ func Test_InvalidPassAuth(t *testing.T) {
 	}
 }
 
+// Freight for Zunka.
+func TestFreightZunkaAPI(t *testing.T) {
+	TFreightAPI(t, Zunka)
+}
+
+// Freight for Zoom.
+func TestFreightZoomAPI(t *testing.T) {
+	TFreightAPI(t, Zoom)
+}
+
 // Freight deadline and price.
-func TestFreightAPI(t *testing.T) {
+func TFreightAPI(t *testing.T, client Client) {
 	p := pack{
 		DestinyCEP: "5-76-25-000",
-		Weight:     1500, // g.
-		Length:     20,   // cm.
-		Height:     30,   // cm.
-		Width:      40,   // cm.
+		// DestinyCEP: "31170210",
+		Weight: 1500, // g.
+		Length: 20,   // cm.
+		Height: 30,   // cm.
+		Width:  40,   // cm.
 	}
 	err := p.Validate()
 	if err != nil {
@@ -103,18 +116,43 @@ func TestFreightAPI(t *testing.T) {
 	}
 	// log.Println("request body: " + string(reqBody))
 
-	req, _ := http.NewRequest(http.MethodGet, "/freightsrv/freights", bytes.NewBuffer(reqBody))
+	var url string
+	var want []string
+
+	switch client {
+	case Zunka:
+		url = "/freightsrv/freights/zunka"
+		want = []string{"Correios", "Transportadora", "Motoboy"}
+	case Zoom:
+		url = "/freightsrv/freights/zoom"
+		want = []string{"Correios", "Transportadora"}
+	}
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
 	req.SetBasicAuth("bypass", "123456")
 	req.Header.Set("Content-Type", "application/json")
 
 	res := httptest.NewRecorder()
 
 	router.ServeHTTP(res, req)
+	log.Printf("res.Body: %s", res.Body.String())
 
-	got := res.Body.String()
-	want := "Some value\n"
+	frInfoS := []freightInfo{}
+	json.Unmarshal(res.Body.Bytes(), &frInfoS)
+	// log.Printf("frInfoS: %+v", frInfoS)
 
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
+	// got := res.Body.String()
+
+	for _, frInfo := range frInfoS {
+		valid := false
+		for _, wantCarrier := range want {
+			if strings.Contains(frInfo.Carrier, wantCarrier) {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			t.Errorf("got:  %q, want some of %q", frInfo.Carrier, want)
+		}
 	}
 }

@@ -29,8 +29,18 @@ func indexHandler(w http.ResponseWriter, req *http.Request, _ httprouter.Params)
 	w.Write([]byte("Hello!\n"))
 }
 
+// Freight for Zunka.
+func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	freightsHandler(w, req, ps, true)
+}
+
+// Freight for Zoom.
+func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	freightsHandler(w, req, ps, false)
+}
+
 // Freight deadline and price.
-func freightsHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func freightsHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params, includeMotoboy bool) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Printf("Error reading body: %v", err)
@@ -54,34 +64,55 @@ func freightsHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Par
 
 	// Motoboy.
 	cMotoboy := make(chan *freightsOk)
-	go getMotoboyFreightByCEP(cMotoboy, p.OriginCEP)
+	go getMotoboyFreightByCEP(cMotoboy, p.DestinyCEP)
 
 	// Region.
 	cRegion := make(chan *freightsOk)
-	go getFreightRegionByCEPAndWeight(cRegion, p.OriginCEP, p.Weight)
+	go getFreightRegionByCEPAndWeight(cRegion, p.DestinyCEP, p.Weight)
 
 	frsOkMotoboy, frsOkCorreios, frsOkRegion := <-cMotoboy, <-cCorreios, <-cRegion
 
+	frInfoS := []freightInfo{}
 	// Correios result.
 	if frsOkCorreios.Ok {
 		for _, pfr := range frsOkCorreios.Freights {
-			log.Printf("Correio freight: %+v", *pfr)
+			frInfoS = append(frInfoS, freightInfo{
+				Carrier:  pfr.Carrier,
+				Deadline: pfr.Deadline,
+				Price:    pfr.Price,
+			})
+			// log.Printf("Correio freight: %+v", *pfr)
+		}
+	}
+
+	// Region result, if no Correios result.
+	if len(frInfoS) == 0 && frsOkRegion.Ok {
+		for _, pfr := range frsOkRegion.Freights {
+			frInfoS = append(frInfoS, freightInfo{
+				Carrier:  pfr.Carrier,
+				Deadline: pfr.Deadline,
+				Price:    pfr.Price,
+			})
+			// log.Printf("Region freight: %+v", *pfr)
 		}
 	}
 
 	// Motoboy result.
-	if frsOkMotoboy.Ok {
+	if frsOkMotoboy.Ok && includeMotoboy {
 		// Motoboy return only one freight.
-		log.Printf("Motoboy freight: %+v", *frsOkMotoboy.Freights[0])
+		frInfoS = append(frInfoS, freightInfo{
+			Carrier:  frsOkMotoboy.Freights[0].Carrier,
+			Deadline: frsOkMotoboy.Freights[0].Deadline,
+			Price:    frsOkMotoboy.Freights[0].Price,
+		})
+		// log.Printf("Motoboy freight: %+v", *frsOkMotoboy.Freights[0])
 	}
 
-	// Region result.
-	if frsOkRegion.Ok {
-		for _, pfr := range frsOkRegion.Freights {
-			log.Printf("Region freight: %+v", *pfr)
-		}
+	frInfoSJson, err := json.Marshal(frInfoS)
+	if err != nil {
+		HandleError(w, err)
+		return
 	}
-
-	w.WriteHeader(200)
-	w.Write([]byte("Some value\n"))
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(frInfoSJson)
 }
