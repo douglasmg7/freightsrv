@@ -21,11 +21,17 @@ type viaCEPAddress struct {
 }
 
 // Get address by CEP.
-func getAddressByCEP(cep string) (viaCEPAddress, error) {
-	// log.Printf("addressFromCEP init: %v", cep)
-	address := viaCEPAddress{}
-
-	// Change to "00000000"
+func getAddressByCEP(cep string) (address viaCEPAddress, err error) {
+	// Try cache.
+	pAddressJson, ok := getViaCEPAddressCache(&cep)
+	// log.Printf("ok: %v, pAddressJson: %v", ok, *pAddressJson)
+	if ok {
+		err = json.Unmarshal([]byte(*pAddressJson), &address)
+		if err != nil {
+			return address, err
+		}
+		return address, nil
+	}
 	cep = strings.ReplaceAll(cep, "-", "")
 
 	// Check if CEP is valid "00000000".
@@ -51,8 +57,13 @@ func getAddressByCEP(cep string) (viaCEPAddress, error) {
 	// log.Printf("address: %s", resBody)
 
 	err = json.Unmarshal(resBody, &address)
+	if err != nil {
+		return address, err
+	}
 	// log.Printf("address: %+v", address)
+	resBodyString := string(resBody)
 
+	setViaCEPAddressCache(&cep, &resBodyString)
 	return address, nil
 }
 
