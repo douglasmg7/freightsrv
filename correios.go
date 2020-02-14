@@ -122,6 +122,17 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 		return
 	}
 
+	// Get from cache.
+	temp, ok := getCorreiosCache(p.OriginCEP, p.DestinyCEP)
+	if ok {
+		// log.Printf("result: %+v", temp)
+		result.Freights = temp
+		result.Ok = true
+		c <- result
+		return
+	}
+
+	// Not in the cache.
 	reqBody := []byte(`nCdEmpresa=` + CORREIOS_COMPANY_ADMIN_CODE +
 		`&sDsSenha=` + CORREIOS_COMPANY_PASSWORD +
 		`&nCdServico=` + CORREIOS_SERVICES_CODE +
@@ -196,87 +207,14 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 		result.Freights = append(result.Freights, &freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, Deadline: service.DeadLine})
 	}
 	// log.Printf("result: %+v", result)
+	// log.Printf("result.Freights: %+v", result.Freights)
+	// Not cache empty values.
+	if len(result.Freights) > 0 {
+		setCorreiosCache(p.OriginCEP, p.DestinyCEP, result.Freights)
+	}
 	result.Ok = true
 	c <- result
 }
-
-// func getCorreiosFreightByPack(cPack pack) (freights []freight, err error) {
-// err = cPack.Validate()
-// if err != nil {
-// return freights, err
-// }
-
-// reqBody := []byte(`nCdEmpresa=` + CORREIOS_COMPANY_ADMIN_CODE +
-// `&sDsSenha=` + CORREIOS_COMPANY_PASSWORD +
-// `&nCdServico=` + CORREIOS_SERVICES_CODE +
-// `&sCepOrigem=` + cPack.OriginCEP +
-// `&sCepDestino=` + cPack.DestinyCEP +
-// `&nVlPeso=` + strconv.Itoa(cPack.Weight/1000) +
-// `&nCdFormato=` + CORREIOS_PACKAGE_FORMAT +
-// `&nVlComprimento=` + strconv.Itoa(cPack.Length) +
-// `&nVlAltura=` + strconv.Itoa(cPack.Height) +
-// `&nVlLargura=` + strconv.Itoa(cPack.Width) +
-// `&nVlDiametro=` + CORREIOS_PACKAGE_DIAMETER +
-// `&sCdMaoPropria=` + CORREIOS_OWN_HAND +
-// `&nVlValorDeclarado=` + CORREIOS_DECLARED_VALUE +
-// `&sCdAvisoRecebimento=` + CORREIOS_ACKNOWLEDGMENT_RECEIPT)
-
-// // Log request.
-// // log.Println("request body: " + string(reqBody))
-
-// // Request product add.
-// client := &http.Client{}
-// req, err := http.NewRequest("POST", CORREIOS_URL, bytes.NewBuffer(reqBody))
-// if checkError(err) {
-// return freights, err
-// }
-// req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-// start := time.Now()
-// res, err := client.Do(req)
-// if checkError(err) {
-// return freights, err
-// }
-// log.Printf("[debug] Correios response time: %.1fs", time.Since(start).Seconds())
-
-// defer res.Body.Close()
-// if checkError(err) {
-// return freights, err
-// }
-
-// // Result.
-// resBody, err := ioutil.ReadAll(res.Body)
-// if checkError(err) {
-// return freights, err
-// }
-// // log.Println("resBody:", string(resBody))
-
-// result := correiosXMLResult{}
-// err = xml.Unmarshal(resBody, &result)
-// if checkError(err) {
-// return freights, err
-// }
-// // log.Printf("\n\nresult: %+v", result)
-
-// for _, service := range result.Result.Services {
-// // log.Printf("service: %+v", service)
-// if service.Error != 0 {
-// log.Printf("[warning] [correios] origin: %s, destiny: %s, code: %d, error: %d, message: %v", cPack.OriginCEP, cPack.DestinyCEP, service.Code, service.Error, service.MsgError)
-// continue
-// }
-// // Convert to float64.
-// price := strings.ReplaceAll(service.Price, ".", "")
-// price = strings.ReplaceAll(service.Price, ",", ".")
-// priceF, err := strconv.ParseFloat(price, 64)
-// if checkError(err) {
-// continue
-// }
-// // log.Printf("Price: %v", priceF)
-// freights = append(freights, freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, Deadline: service.DeadLine})
-// }
-
-// return freights, nil
-// }
 
 func testXML() {
 	testString := []byte(`<cResultado>

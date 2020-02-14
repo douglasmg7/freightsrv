@@ -98,12 +98,12 @@ func TestFreightZoomAPI(t *testing.T) {
 // Freight deadline and price.
 func TFreightAPI(t *testing.T, client Client) {
 	p := pack{
-		DestinyCEP: "5-76-25-000",
-		// DestinyCEP: "31170210",
-		Weight: 1500, // g.
-		Length: 20,   // cm.
-		Height: 30,   // cm.
-		Width:  40,   // cm.
+		// DestinyCEP: "5-76-25-000",
+		DestinyCEP: "31170210",
+		Weight:     1500, // g.
+		Length:     20,   // cm.
+		Height:     30,   // cm.
+		Width:      40,   // cm.
 	}
 	err := p.Validate()
 	if err != nil {

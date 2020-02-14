@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -73,26 +74,26 @@ func getViaCEPAddressCache(pCep *string) (*string, bool) {
 	return &addressJson, true
 }
 
-// // Set via cep address.
-// func setViaCEPAddressCache(cep string, address viaCEPAddress) {
-// cep = strings.ReplaceAll(cep, "-", "")
-// key := "via-cep-address-" + cep
-// addressJson, err := json.Marshal(address)
-// if checkError(err) {
-// return
-// }
-// _ = redisSet(key, string(addressJson), time.Hour*2)
-// }
+//****************************************************************************
+//	CORREIOS FREIGHTS
+//****************************************************************************
+// Set Correios estimate delivery.
+func setCorreiosCache(cepOrigin, cepDestiny string, frS []*freight) {
+	key := "correios-estimate-delivery" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
+	frSJson, err := json.Marshal(frS)
+	if checkError(err) {
+		return
+	}
+	_ = redisSet(key, string(frSJson), time.Hour*2)
+}
 
-// // Get via cep address.
-// func getViaCEPAddressCache(cep string) (pAddress *ViaCEPAddress, ok bool) {
-// pAddress = &viaCEPAddress{}
-// cep = strings.ReplaceAll(cep, "-", "")
-// key := "via-cep-address-" + cep
-// addressJson := redisGet(key)
-// err := json.Unmarshal([]byte(addressJson), &pAddress)
-// if checkError(err) {
-// return pAddress, false
-// }
-// return pAddress, true
-// }
+// Get Correios estimate delivery.
+func getCorreiosCache(cepOrigin, cepDestiny string) (frS []*freight, ok bool) {
+	key := "correios-estimate-delivery" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
+	frSJson := redisGet(key)
+	err := json.Unmarshal([]byte(frSJson), &frS)
+	if checkError(err) {
+		return frS, false
+	}
+	return frS, true
+}

@@ -51,11 +51,18 @@ var production bool
 // Brazil time location.
 var brLocation *time.Location
 
+// type freight struct {
+// Carrier  string  `xml:"carrier"`
+// Service  string  `xml:"service"`
+// Price    float64 `xml:"price"`
+// Deadline int     `xml:"deadLine"` // Days.
+// }
+
 type freight struct {
-	Carrier  string  `xml:"carrier"`
-	Service  string  `xml:"service"`
-	Price    float64 `xml:"price"`
-	Deadline int     `xml:"deadLine"` // Days.
+	Carrier  string  `json:"carrier"`
+	Service  string  `json:"service"`
+	Price    float64 `json:"price"`
+	Deadline int     `json:"deadLine"` // Days.
 }
 
 type freightInfo struct {
