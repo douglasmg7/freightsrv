@@ -79,7 +79,7 @@ func getViaCEPAddressCache(pCep *string) (*string, bool) {
 //****************************************************************************
 // Set Correios estimate delivery.
 func setCorreiosCache(cepOrigin, cepDestiny string, frS []*freight) {
-	key := "correios-estimate-delivery" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
+	key := "correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
 	frSJson, err := json.Marshal(frS)
 	if checkError(err) {
 		return
@@ -89,8 +89,13 @@ func setCorreiosCache(cepOrigin, cepDestiny string, frS []*freight) {
 
 // Get Correios estimate delivery.
 func getCorreiosCache(cepOrigin, cepDestiny string) (frS []*freight, ok bool) {
-	key := "correios-estimate-delivery" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
+	key := "correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
 	frSJson := redisGet(key)
+	// No key.
+	if frSJson == "" {
+		return frS, false
+	}
+	// log.Printf("frSJson: %s\n", frSJson)
 	err := json.Unmarshal([]byte(frSJson), &frS)
 	if checkError(err) {
 		return frS, false

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -98,12 +97,12 @@ func TestFreightZoomAPI(t *testing.T) {
 // Freight deadline and price.
 func TFreightAPI(t *testing.T, client Client) {
 	p := pack{
-		// DestinyCEP: "5-76-25-000",
-		DestinyCEP: "31170210",
-		Weight:     1500, // g.
-		Length:     20,   // cm.
-		Height:     30,   // cm.
-		Width:      40,   // cm.
+		DestinyCEP: "5-76-25-000",
+		// DestinyCEP: "31170210",
+		Weight: 1500, // g.
+		Length: 20,   // cm.
+		Height: 30,   // cm.
+		Width:  40,   // cm.
 	}
 	err := p.Validate()
 	if err != nil {
@@ -135,7 +134,7 @@ func TFreightAPI(t *testing.T, client Client) {
 	res := httptest.NewRecorder()
 
 	router.ServeHTTP(res, req)
-	log.Printf("res.Body: %s", res.Body.String())
+	// log.Printf("res.Body: %s", res.Body.String())
 
 	frInfoS := []freightInfo{}
 	json.Unmarshal(res.Body.Bytes(), &frInfoS)
