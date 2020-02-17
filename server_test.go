@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -154,4 +155,48 @@ func TFreightAPI(t *testing.T, client Client) {
 			t.Errorf("got:  %q, want some of %q", frInfo.Carrier, want)
 		}
 	}
+}
+
+/******************************************************************************
+*	MOTOBOY
+*******************************************************************************/
+// Motoboy freights.
+func TestMotoboyDeliveriesAPI(t *testing.T) {
+
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/motoboy-deliveries"
+	// want := ""
+
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	log.Printf("res.Body: %s", res.Body.String())
+
+	deliveries := []motoboyFreight{}
+	json.Unmarshal(res.Body.Bytes(), &deliveries)
+	// log.Printf("frInfoS: %+v", frInfoS)
+
+	// got := res.Body.String()
+
+	// for _, deliverie := range deliveries {
+	// valid := false
+	// for _, wantCarrier := range want {
+	// if strings.Contains(frInfo.Carrier, wantCarrier) {
+	// valid = true
+	// break
+	// }
+	// }
+	// if !valid {
+	// t.Errorf("got:  %q, want some of %q", frInfo.Carrier, want)
+	// }
+	// }
 }

@@ -140,6 +140,7 @@ func init() {
 	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunka"}))
 	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
+	router.GET("/freightsrv/motoboy-deliveries", checkAuthorization(motoboyDeliveriesHandler, []string{"zunka"}))
 }
 
 func initRedis() {

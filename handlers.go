@@ -19,7 +19,6 @@ func HandleError(w http.ResponseWriter, err error) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		log.Println(err.Error())
-		return
 	}
 }
 
