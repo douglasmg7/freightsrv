@@ -5,4 +5,13 @@
 # go test -run SaveFreightRegion
 
 # go test -run Handler -args -dev=true
-go test -run Freight 
+
+# Default clean cache.
+if [[ $1 != "--cache" ]]; then
+    echo Cleaning cache...
+    # KEYS=`redis-cli keys freightsrv-*`
+    # echo $KEYS
+    redis-cli del `redis-cli keys freightsrv-*`
+fi
+
+go test

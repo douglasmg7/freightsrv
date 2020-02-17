@@ -43,7 +43,7 @@ func redisDel(key string) error {
 // Set CEP region.
 func setCEPRegion(cep string, region string) {
 	cep = strings.ReplaceAll(cep, "-", "")
-	key := "cep-region-" + cep
+	key := "freightsrv-cep-region-" + cep
 	// Save for one wekeend.
 	_ = redisSet(key, region, time.Hour*168)
 }
@@ -51,7 +51,7 @@ func setCEPRegion(cep string, region string) {
 // Get CEP region.
 func getCEPRegion(cep string) string {
 	cep = strings.ReplaceAll(cep, "-", "")
-	key := "cep-region-" + cep
+	key := "freightsrv-cep-region-" + cep
 	return redisGet(key)
 }
 
@@ -60,13 +60,13 @@ func getCEPRegion(cep string) string {
 //****************************************************************************
 // Set via cep address.
 func setViaCEPAddressCache(pCep *string, pAddressJson *string) {
-	key := "via-cep-address-" + strings.ReplaceAll(*pCep, "-", "")
+	key := "freightsrv-via-cep-address-" + strings.ReplaceAll(*pCep, "-", "")
 	_ = redisSet(key, string(*pAddressJson), time.Hour*2)
 }
 
 // Get via cep address.
 func getViaCEPAddressCache(pCep *string) (*string, bool) {
-	key := "via-cep-address-" + strings.ReplaceAll(*pCep, "-", "")
+	key := "freightsrv-via-cep-address-" + strings.ReplaceAll(*pCep, "-", "")
 	addressJson := redisGet(key)
 	if addressJson == "" {
 		return nil, false
@@ -79,7 +79,7 @@ func getViaCEPAddressCache(pCep *string) (*string, bool) {
 //****************************************************************************
 // Set Correios estimate delivery.
 func setCorreiosCache(cepOrigin, cepDestiny string, frS []*freight) {
-	key := "correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
+	key := "freightsrv-correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
 	frSJson, err := json.Marshal(frS)
 	if checkError(err) {
 		return
@@ -89,7 +89,7 @@ func setCorreiosCache(cepOrigin, cepDestiny string, frS []*freight) {
 
 // Get Correios estimate delivery.
 func getCorreiosCache(cepOrigin, cepDestiny string) (frS []*freight, ok bool) {
-	key := "correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
+	key := "freightsrv-correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
 	frSJson := redisGet(key)
 	// No key.
 	if frSJson == "" {

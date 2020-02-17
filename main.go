@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"io"
 	"log"
 	"net/http"
@@ -91,8 +90,12 @@ func normalizeString(str string) string {
 func init() {
 	// log.Printf("args: %+v", os.Args)
 
-	// Run mode.
-	flag.BoolVar(&production, "production", false, "Run mode not defined, use -production=true for production")
+	// Check if production mode.
+	for _, arg := range os.Args {
+		if arg == "--production" {
+			production = true
+		}
+	}
 
 	// Brazil location.
 	brLocation, err = time.LoadLocation("America/Sao_Paulo")
@@ -167,9 +170,6 @@ func closeSql3DB() {
 }
 
 func main() {
-	flag.Parse()
-	// log.Println("production:", production)
-
 	// Log start.
 	runMode := "development"
 	if production {
