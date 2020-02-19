@@ -9,9 +9,10 @@
 # Default clean cache.
 if [[ $1 != "--cache" ]]; then
     echo Cleaning cache...
-    # KEYS=`redis-cli keys freightsrv-*`
+    KEYS=`redis-cli keys freightsrv-*`
+    [[ ! -z $KEYS ]] && redis-cli del $KEYS
     # echo $KEYS
-    redis-cli del `redis-cli keys freightsrv-*`
+    # redis-cli del `redis-cli keys freightsrv-*`
 fi
 
-go test -run MotoboyDeliveries
+go test -run MotoboyFreight

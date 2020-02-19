@@ -8,14 +8,14 @@ import (
 )
 
 type motoboyFreight struct {
-	ID        int       `db:"id"`
-	State     string    `db:"state"`
-	City      string    `db:"city"`
-	CityNorm  string    `db:"city_norm"` // Normalized city
-	Deadline  int       `db:"deadline"`  // days
-	Price     int       `db:"price"`     // R$ X 100
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+	ID        int       `db:"id" json:"id"`
+	State     string    `db:"state" json:"-"`
+	City      string    `db:"city" json:"city"`
+	CityNorm  string    `db:"city_norm" json:"-"`       // Normalized city
+	Deadline  int       `db:"deadline" json:"deadline"` // days
+	Price     int       `db:"price" json:"price"`       // R$ X 100
+	CreatedAt time.Time `db:"created_at" json:"-"`
+	UpdatedAt time.Time `db:"updated_at" json:"-"`
 }
 
 // Normalize city.

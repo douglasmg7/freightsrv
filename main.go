@@ -107,7 +107,7 @@ func init() {
 	trans = transform.Chain(norm.NFD, transform.RemoveFunc(isMn), norm.NFC)
 
 	// Listern address.
-	address = ":8084"
+	address = ":8081"
 
 	// Log path.
 	zunkaPath := os.Getenv("ZUNKAPATH")
@@ -140,7 +140,8 @@ func init() {
 	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunka"}))
 	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
-	router.GET("/freightsrv/motoboy-deliveries", checkAuthorization(motoboyDeliveriesHandler, []string{"zunka"}))
+	router.GET("/freightsrv/motoboy-freights", checkAuthorization(motoboyFreightsHandler, []string{"zunka"}))
+	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(motoboyFreightHandler, []string{"zunka"}))
 }
 
 func initRedis() {

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -161,16 +160,8 @@ func TFreightAPI(t *testing.T, client Client) {
 *	MOTOBOY
 *******************************************************************************/
 // Motoboy freights.
-func TestMotoboyDeliveriesAPI(t *testing.T) {
-
-	if err != nil {
-		t.Error(err)
-	}
-	// log.Println("request body: " + string(reqBody))
-
-	url := "/freightsrv/motoboy-deliveries"
-	// want := ""
-
+func TestMotoboyFreightsAPI(t *testing.T) {
+	url := "/freightsrv/motoboy-freights"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 
 	req.SetBasicAuth("bypass", "123456")
@@ -179,24 +170,49 @@ func TestMotoboyDeliveriesAPI(t *testing.T) {
 	res := httptest.NewRecorder()
 
 	router.ServeHTTP(res, req)
-	log.Printf("res.Body: %s", res.Body.String())
+	// log.Printf("res.Body: %s", res.Body.String())
 
 	deliveries := []motoboyFreight{}
 	json.Unmarshal(res.Body.Bytes(), &deliveries)
-	// log.Printf("frInfoS: %+v", frInfoS)
 
-	// got := res.Body.String()
+	wantCity := "Guarupé"
+	wantDeadline := 3
+	wantPrice := 9545
+	valid := false
+	for _, deliverie := range deliveries {
+		if deliverie.City == wantCity && deliverie.Deadline == wantDeadline && deliverie.Price == wantPrice {
+			valid = true
+		}
+	}
+	if !valid {
+		t.Errorf("got:  %v\nwant  %v, %v, %v", deliveries, wantCity, wantDeadline, wantPrice)
+	}
+}
 
-	// for _, deliverie := range deliveries {
-	// valid := false
-	// for _, wantCarrier := range want {
-	// if strings.Contains(frInfo.Carrier, wantCarrier) {
-	// valid = true
-	// break
-	// }
-	// }
-	// if !valid {
-	// t.Errorf("got:  %q, want some of %q", frInfo.Carrier, want)
-	// }
-	// }
+// Motoboy freights.
+func TestMotoboyFreightAPI(t *testing.T) {
+	url := "/freightsrv/motoboy-freight/1"
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	deliverie := motoboyFreight{}
+	json.Unmarshal(res.Body.Bytes(), &deliverie)
+
+	wantCity := "Belo Horizonte"
+	wantDeadline := 1
+	wantPrice := 7520
+	valid := false
+	if deliverie.City == wantCity && deliverie.Deadline == wantDeadline && deliverie.Price == wantPrice {
+		valid = true
+	}
+	if !valid {
+		t.Errorf("got:  %v\nwant  %v, %v, %v", deliverie, wantCity, wantDeadline, wantPrice)
+	}
 }
