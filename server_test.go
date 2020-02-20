@@ -159,7 +159,7 @@ func TFreightAPI(t *testing.T, client Client) {
 /******************************************************************************
 *	MOTOBOY
 *******************************************************************************/
-// Motoboy freights.
+// Get motoboy freights.
 func TestMotoboyFreightsAPI(t *testing.T) {
 	url := "/freightsrv/motoboy-freights"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
@@ -189,7 +189,7 @@ func TestMotoboyFreightsAPI(t *testing.T) {
 	}
 }
 
-// Motoboy freights.
+// Get one motoboy freights.
 func TestMotoboyFreightAPI(t *testing.T) {
 	url := "/freightsrv/motoboy-freight/1"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
@@ -214,5 +214,39 @@ func TestMotoboyFreightAPI(t *testing.T) {
 	}
 	if !valid {
 		t.Errorf("got:  %v\nwant  %v, %v, %v", deliverie, wantCity, wantDeadline, wantPrice)
+	}
+}
+
+// Update motoboy freight.
+func TestUpdateMotoboyFreightAPI(t *testing.T) {
+	// Url.
+	url := "/freightsrv/motoboy-freight-t"
+	// url := "/freightsrv/motoboy-freight/update"
+
+	// Data.
+	fr := motoboyFreight{
+		ID:       1,
+		City:     "Belo Horizonte",
+		Deadline: 1,
+		Price:    7521,
+	}
+	frJSON, err := json.Marshal(fr)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	want := 200
+	if res.Code != want {
+		t.Errorf("got:  %v, want  %v\n", res.Code, want)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
 	}
 }

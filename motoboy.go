@@ -115,6 +115,20 @@ func getMotoboyFreightOld(mf *motoboyFreight) error {
 	return nil
 }
 
+// Update motoboy freight by id.
+func updateMotoboyFreightById(freight *motoboyFreight) bool {
+	// Update.
+	freight.NormalizeCity()
+	// log.Printf("freight: %+v\n", *freight)
+	stm := "UPDATE motoboy_freight SET city_norm=?, city=?, deadline=?, price=?  WHERE id=?"
+	// log.Printf("UPDATE motoboy_freight SET city_norm=%v, city=%v, deadline=%v, price=%v WHERE id=%v", freight.CityNorm, freight.City, freight.Deadline, freight.Price, freight.ID)
+	_, err := sql3DB.Exec(stm, freight.CityNorm, freight.City, freight.Deadline, freight.Price, freight.ID)
+	if checkError(err) {
+		return false
+	}
+	return true
+}
+
 // Save motoboy freight.
 func saveMotoboyFreight(mf *motoboyFreight) error {
 	mf.NormalizeCity()

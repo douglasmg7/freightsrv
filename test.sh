@@ -15,4 +15,4 @@ if [[ $1 != "--cache" ]]; then
     # redis-cli del `redis-cli keys freightsrv-*`
 fi
 
-go test -run MotoboyFreight
+go test -run UpdateMotoboyFreight

@@ -142,6 +142,7 @@ func init() {
 	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
 	router.GET("/freightsrv/motoboy-freights", checkAuthorization(motoboyFreightsHandler, []string{"zunka"}))
 	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(motoboyFreightHandler, []string{"zunka"}))
+	router.POST("/freightsrv/motoboy-freight", checkAuthorization(motoboyFreightUpdateHandler, []string{"zunka"}))
 }
 
 func initRedis() {
@@ -255,7 +256,7 @@ func checkAuthorization(h httprouter.Handle, users []string) httprouter.Handle {
 		}
 
 		// Unauthorised.
-		// log.Printf("received  , %v %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
+		// log.Printf("Auth -> method: %v, url: %v, user: %v, pass: %v, ok: %v", req.Method, req.URL.Path, user, pass, ok)
 		w.Header().Set("WWW-Authenticate", `Basic realm="Please enter your username and password for this service"`)
 		w.WriteHeader(401)
 		w.Write([]byte("Unauthorised\n"))
