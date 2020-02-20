@@ -217,18 +217,16 @@ func TestMotoboyFreightAPI(t *testing.T) {
 	}
 }
 
-// Update motoboy freight.
-func TestUpdateMotoboyFreightAPI(t *testing.T) {
+// New motoboy freight.
+func TestNewMotoboyFreightAPI(t *testing.T) {
 	// Url.
-	url := "/freightsrv/motoboy-freight-t"
-	// url := "/freightsrv/motoboy-freight/update"
+	url := "/freightsrv/motoboy-freight"
 
 	// Data.
 	fr := motoboyFreight{
-		ID:       1,
-		City:     "Belo Horizonte",
+		City:     "Nova Lima",
 		Deadline: 1,
-		Price:    7521,
+		Price:    5620,
 	}
 	frJSON, err := json.Marshal(fr)
 	if err != nil {
@@ -237,6 +235,39 @@ func TestUpdateMotoboyFreightAPI(t *testing.T) {
 
 	// Request.
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	want := 200
+	if res.Code != want {
+		t.Errorf("got:  %v, want  %v\n", res.Code, want)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+	}
+}
+
+// Update motoboy freight.
+func TestUpdateMotoboyFreightAPI(t *testing.T) {
+	// Url.
+	url := "/freightsrv/motoboy-freight/4"
+
+	// Data.
+	fr := motoboyFreight{
+		ID:       4,
+		City:     "Sabará",
+		Deadline: 2,
+		Price:    9999,
+	}
+	frJSON, err := json.Marshal(fr)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(frJSON))
 	req.SetBasicAuth("bypass", "123456")
 	req.Header.Set("Content-Type", "application/json")
 	res := httptest.NewRecorder()

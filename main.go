@@ -140,9 +140,11 @@ func init() {
 	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunka"}))
 	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
-	router.GET("/freightsrv/motoboy-freights", checkAuthorization(motoboyFreightsHandler, []string{"zunka"}))
-	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(motoboyFreightHandler, []string{"zunka"}))
-	router.POST("/freightsrv/motoboy-freight", checkAuthorization(motoboyFreightUpdateHandler, []string{"zunka"}))
+	// Motoboy.
+	router.GET("/freightsrv/motoboy-freights", checkAuthorization(getAllMotoboyFreightHandler, []string{"zunka"}))
+	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(getMotoboyFreightHandler, []string{"zunka"}))
+	router.PUT("/freightsrv/motoboy-freight/:id", checkAuthorization(updateMotoboyFreightHandler, []string{"zunka"}))
+	router.POST("/freightsrv/motoboy-freight", checkAuthorization(createMotoboyFreightHandler, []string{"zunka"}))
 }
 
 func initRedis() {

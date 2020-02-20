@@ -20,3 +20,4 @@ INSERT INTO freight_region(region, weight, deadline, price) VALUES ("south", 100
 INSERT INTO motoboy_freight(city, city_norm, deadline, price) VALUES ("Belo Horizonte", "belo-horizonte", 1, 7520);
 INSERT INTO motoboy_freight(city, city_norm, deadline, price) VALUES ("Conceição do Mato Dentro", "conceicao-do-mato-dentro", 2, 8545);
 INSERT INTO motoboy_freight(city, city_norm, deadline, price) VALUES ("Guarupé", "guarupe", 3, 9545);
+INSERT INTO motoboy_freight(city, city_norm, deadline, price) VALUES ("Sabará", "sabara", 1, 10000);

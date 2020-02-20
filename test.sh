@@ -13,6 +13,9 @@ if [[ $1 != "--cache" ]]; then
     [[ ! -z $KEYS ]] && redis-cli del $KEYS
     # echo $KEYS
     # redis-cli del `redis-cli keys freightsrv-*`
+    cd bin/db
+    ./rcp.sh
+    cd ../..
 fi
 
-go test -run UpdateMotoboyFreight
+go test -run NewMotoboy

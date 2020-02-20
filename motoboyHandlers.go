@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -10,7 +11,7 @@ import (
 )
 
 // Motoboy deliveries.
-func motoboyFreightsHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func getAllMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	// Get data.
 	deliveries, err := getAllMotoboyFreight()
 	if checkError(err) {
@@ -28,8 +29,8 @@ func motoboyFreightsHandler(w http.ResponseWriter, req *http.Request, ps httprou
 	w.Write(deliveriesJSON)
 }
 
-// Get motoboy deliverie.
-func motoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+// Get motoboy freight.
+func getMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	// Get id.
 	id, err := strconv.Atoi(ps.ByName("id"))
 	if checkError(err) {
@@ -54,8 +55,35 @@ func motoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprout
 	w.Write(frJSON)
 }
 
-// Save/Update motoboy deliverie.
-func motoboyFreightUpdateHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+// Update motoboy freight.
+func updateMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	log.Printf("*** PUT *** %v\n", ps.ByName("id"))
+	// Data.
+	fr := motoboyFreight{}
+	body, err := ioutil.ReadAll(req.Body)
+	if checkError(err) {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+	// log.Printf("body: %v\n", string(body))
+	err = json.Unmarshal(body, &fr)
+	if checkError(err) {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+
+	// Update.
+	ok := updateMotoboyFreightById(&fr)
+	if !ok {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(200)
+}
+
+// Create motoboy freight.
+func createMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	log.Printf("*** POST *** \n")
 	// Data.
 	fr := motoboyFreight{}
 	body, err := ioutil.ReadAll(req.Body)
