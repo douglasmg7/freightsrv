@@ -117,13 +117,41 @@ func getMotoboyFreightOld(mf *motoboyFreight) error {
 
 // Update motoboy freight by id.
 func updateMotoboyFreightById(freight *motoboyFreight) bool {
-	// Update.
 	freight.NormalizeCity()
 	// log.Printf("freight: %+v\n", *freight)
 	stm := "UPDATE motoboy_freight SET city_norm=?, city=?, deadline=?, price=?  WHERE id=?"
 	// log.Printf("UPDATE motoboy_freight SET city_norm=%v, city=%v, deadline=%v, price=%v WHERE id=%v", freight.CityNorm, freight.City, freight.Deadline, freight.Price, freight.ID)
 	_, err := sql3DB.Exec(stm, freight.CityNorm, freight.City, freight.Deadline, freight.Price, freight.ID)
 	if checkError(err) {
+		return false
+	}
+	return true
+}
+
+// Create motoboy freight.
+func createMotoboyFreight(freight *motoboyFreight) bool {
+	freight.NormalizeCity()
+	// log.Printf("freight: %+v\n", *freight)
+	stm := "INSERT INTO motoboy_freight(state, city, city_norm, deadline, price) VALUES(?, ?, ?, ?, ?)"
+	_, err := sql3DB.Exec(stm, "mg", freight.City, freight.CityNorm, freight.Deadline, freight.Price)
+	if checkError(err) {
+		return false
+	}
+	return true
+}
+
+// Delete motoboy freight.
+func deleteMotoboyFreight(id int) bool {
+	stm := "DELETE FROM motoboy_freight WHERE id=?"
+	result, err := sql3DB.Exec(stm, id)
+	if checkError(err) {
+		return false
+	}
+	rowsAffected, err := result.RowsAffected()
+	if checkError(err) {
+		return false
+	}
+	if rowsAffected == 0 {
 		return false
 	}
 	return true
@@ -160,20 +188,6 @@ func saveMotoboyFreight(mf *motoboyFreight) error {
 	err = tx.Commit()
 	if err != nil {
 		return fmt.Errorf("Commiting insert/update into motoboy_freight table. %s", err)
-	}
-	return nil
-}
-
-// Delete motoboy freight.
-func delMotoboyFreight(id int) error {
-	stm := "DELETE FROM motoboy_freight WHERE id=?"
-	result, err := sql3DB.Exec(stm, id)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if rowsAffected == 0 {
-		return fmt.Errorf("no one row was affected, deleting by id: %d from motoboy_freight table", id)
 	}
 	return nil
 }

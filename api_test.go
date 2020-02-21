@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -159,7 +160,7 @@ func TFreightAPI(t *testing.T, client Client) {
 /******************************************************************************
 *	MOTOBOY
 *******************************************************************************/
-// Get motoboy freights.
+// Get all motoboy freights.
 func TestMotoboyFreightsAPI(t *testing.T) {
 	url := "/freightsrv/motoboy-freights"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
@@ -189,7 +190,7 @@ func TestMotoboyFreightsAPI(t *testing.T) {
 	}
 }
 
-// Get one motoboy freights.
+// Get one motoboy freight.
 func TestMotoboyFreightAPI(t *testing.T) {
 	url := "/freightsrv/motoboy-freight/1"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
@@ -217,8 +218,8 @@ func TestMotoboyFreightAPI(t *testing.T) {
 	}
 }
 
-// New motoboy freight.
-func TestNewMotoboyFreightAPI(t *testing.T) {
+// Create motoboy freight.
+func TestCreateMotoboyFreightAPI(t *testing.T) {
 	// Url.
 	url := "/freightsrv/motoboy-freight"
 
@@ -235,6 +236,35 @@ func TestNewMotoboyFreightAPI(t *testing.T) {
 
 	// Request.
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	want := 200
+	if res.Code != want {
+		t.Errorf("got:  %v, want  %v\n", res.Code, want)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+	}
+}
+
+// Delete motoboy freight.
+func TestDeleteMotoboyFreightAPI(t *testing.T) {
+	// Get city id to delete.
+	city := "Nova Lima"
+	freight, ok := getMotoboyFreightByLocation("mg", city)
+	if !ok {
+		t.Errorf("No city %s to test delete.", city)
+	}
+	// fmt.Printf("freight to delete: %+v", freight)
+
+	// Url.
+	url := fmt.Sprintf("/freightsrv/motoboy-freight/%d", freight.ID)
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
 	req.SetBasicAuth("bypass", "123456")
 	req.Header.Set("Content-Type", "application/json")
 	res := httptest.NewRecorder()

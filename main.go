@@ -144,6 +144,7 @@ func init() {
 	router.GET("/freightsrv/motoboy-freights", checkAuthorization(getAllMotoboyFreightHandler, []string{"zunka"}))
 	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(getMotoboyFreightHandler, []string{"zunka"}))
 	router.PUT("/freightsrv/motoboy-freight/:id", checkAuthorization(updateMotoboyFreightHandler, []string{"zunka"}))
+	router.DELETE("/freightsrv/motoboy-freight/:id", checkAuthorization(deleteMotoboyFreightHandler, []string{"zunka"}))
 	router.POST("/freightsrv/motoboy-freight", checkAuthorization(createMotoboyFreightHandler, []string{"zunka"}))
 }
 

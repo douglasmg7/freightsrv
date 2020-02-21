@@ -18,4 +18,5 @@ if [[ $1 != "--cache" ]]; then
     cd ../..
 fi
 
-go test -run NewMotoboy
+# go test -run otoboy
+go test

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 	"strings"
@@ -364,12 +365,8 @@ func TestGetMotoboyFreightByCEP(t *testing.T) {
 
 // Delete motoboy freight.
 func TestDelMotoboyFreight(t *testing.T) {
-	err := delMotoboyFreight(validMotoboyFreightID)
-	if err != nil {
-		t.Error(err)
+	ok := deleteMotoboyFreight(validMotoboyFreightID)
+	if !ok {
+		t.Error(errors.New("Delete motoboy freight returned no ok."))
 	}
 }
-
-//*****************************************************************************
-// TEST SERVER
-//*****************************************************************************

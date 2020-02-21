@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -31,6 +30,7 @@ func getAllMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps ht
 
 // Get motoboy freight.
 func getMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	// log.Printf("*** GET *** %v\n", ps.ByName("id"))
 	// Get id.
 	id, err := strconv.Atoi(ps.ByName("id"))
 	if checkError(err) {
@@ -55,9 +55,9 @@ func getMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httpr
 	w.Write(frJSON)
 }
 
-// Update motoboy freight.
-func updateMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	log.Printf("*** PUT *** %v\n", ps.ByName("id"))
+// Create motoboy freight.
+func createMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	// log.Printf("*** POST *** \n")
 	// Data.
 	fr := motoboyFreight{}
 	body, err := ioutil.ReadAll(req.Body)
@@ -73,7 +73,7 @@ func updateMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps ht
 	}
 
 	// Update.
-	ok := updateMotoboyFreightById(&fr)
+	ok := createMotoboyFreight(&fr)
 	if !ok {
 		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
 		return
@@ -81,9 +81,26 @@ func updateMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps ht
 	w.WriteHeader(200)
 }
 
-// Create motoboy freight.
-func createMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	log.Printf("*** POST *** \n")
+// Delete motoboy freight.
+func deleteMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	// log.Printf("*** DELETE *** \n")
+	id, err := strconv.Atoi(ps.ByName("id"))
+	if checkError(err) {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+	// Delete.
+	ok := deleteMotoboyFreight(id)
+	if !ok {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(200)
+}
+
+// Update motoboy freight.
+func updateMotoboyFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	// log.Printf("*** PUT *** %v\n", ps.ByName("id"))
 	// Data.
 	fr := motoboyFreight{}
 	body, err := ioutil.ReadAll(req.Body)
