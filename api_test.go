@@ -158,10 +158,119 @@ func TFreightAPI(t *testing.T, client Client) {
 }
 
 /******************************************************************************
+*	Region freights
+*******************************************************************************/
+var regionFreightTemp = freightRegion{
+	Region:   "south",
+	Weight:   4000,
+	Deadline: 8,
+	Price:    12345,
+}
+
+// Create region freight.
+func TestCreateRegionFreightAPI(t *testing.T) {
+	t.SkipNow()
+	// Url.
+	url := "/freightsrv/region-freight"
+
+	frJSON, err := json.Marshal(regionFreightTemp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	want := 200
+	if res.Code != want {
+		t.Errorf("got:  %v, want  %v\n", res.Code, want)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+	}
+}
+
+// All region freights.
+func TestGetAllRegionFreightsAPI(t *testing.T) {
+	url := "/freightsrv/region-freights"
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		return
+	}
+
+	freights := []freightRegion{}
+	err = json.Unmarshal(res.Body.Bytes(), &freights)
+	if err != nil {
+		t.Errorf("Err: %s", err)
+		return
+	}
+
+	valid := false
+	want := regionFreightTemp
+	for _, freight := range freights {
+		if freight.Region == want.Region && freight.Weight == want.Weight && freight.Deadline == want.Deadline && freight.Price == want.Price {
+			valid = true
+			regionFreightTemp.ID = freight.ID
+		}
+	}
+	if !valid {
+		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freights, want.Region, want.Weight, want.Deadline, want.Price)
+	}
+}
+
+// Get one region freight.
+func TestGetOneRegionFreightAPI(t *testing.T) {
+	url := fmt.Sprintf("/freightsrv/region-freight/%d", regionFreightTemp.ID)
+	// log.Printf("url: %v", url)
+
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		return
+	}
+
+	freight := freightRegion{}
+	err = json.Unmarshal(res.Body.Bytes(), &freight)
+	if err != nil {
+		t.Errorf("Err: %s", err)
+		return
+	}
+	// log.Printf("Freight: %+v", freight)
+
+	want := regionFreightTemp
+	if freight.Region != want.Region || freight.Weight != want.Weight || freight.Deadline != want.Deadline || freight.Price != want.Price {
+		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freight, want.Region, want.Weight, want.Deadline, want.Price)
+	}
+}
+
+// update
+
+// delete
+
+/******************************************************************************
 *	MOTOBOY
 *******************************************************************************/
 // Get all motoboy freights.
-func TestMotoboyFreightsAPI(t *testing.T) {
+func TestGetAllMotoboyFreightsAPI(t *testing.T) {
 	url := "/freightsrv/motoboy-freights"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 
@@ -191,7 +300,7 @@ func TestMotoboyFreightsAPI(t *testing.T) {
 }
 
 // Get one motoboy freight.
-func TestMotoboyFreightAPI(t *testing.T) {
+func TestGetOneMotoboyFreightAPI(t *testing.T) {
 	url := "/freightsrv/motoboy-freight/1"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 

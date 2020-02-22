@@ -150,13 +150,26 @@ func TestGetCorreiosFreightByPack(t *testing.T) {
 }
 
 //*****************************************************************************
-// FREIGHT REGION
+// Freight region
 //*****************************************************************************
-var validFreightRegionId int
+var createdFreightRegionID int
 var fr freightRegion
 
-// Save freight region.
-func TestSaveFreightRegion(t *testing.T) {
+// Get all freight regions.
+func TestGetAllFreightRegion(t *testing.T) {
+	frS, ok := getAllFreightRegion()
+	if !ok {
+		t.Errorf("Get all freight region returned not ok.")
+	}
+	frSLen := len(frS)
+	if frSLen == 0 {
+		t.Errorf("freigh_region rows: %v, want > 0.", frSLen)
+	}
+	// log.Printf("frS: %+v", frS)
+}
+
+// Create freight region.
+func TestCreateFreightRegion(t *testing.T) {
 	fr = freightRegion{
 		Region:   "south",
 		Weight:   4000,
@@ -164,46 +177,54 @@ func TestSaveFreightRegion(t *testing.T) {
 		Price:    7845,
 	}
 
-	err := saveFreightRegion(fr)
-	if err != nil {
-		t.Errorf("Saving freight region. %s", err)
+	// Create freight.
+	ok := createFreightRegion(&fr)
+	if !ok {
+		t.Errorf("Create freight region not returned ok.")
 	}
-	// log.Printf("updatedAt        : %+v", updatedAt)
-	// log.Printf("updatedAt        : %+s", updatedAt.Format(time.RFC3339))
 
 	// Check saved data.
 	var frResult freightRegion
 	err = sql3DB.Get(&frResult, "SELECT * FROM freight_region WHERE region=? AND weight=? AND deadline=?", fr.Region, fr.Weight, fr.Deadline)
 	if err != nil {
-		t.Errorf("Getting freight_region row. %s", err)
+		t.Errorf("Getting created freight. %s", err)
 	}
-	// log.Printf("frResult createdAt val: %+v", frResult.CreatedAt)
-	// log.Printf("frResult updatedAt val: %+v", frResult.UpdatedAt)
-
-	// log.Printf("frResult createdAt str: %+s", frResult.CreatedAt.Format(time.RFC3339))
-	// log.Printf("frResult updatedAt str: %+s", frResult.UpdatedAt.Format(time.RFC3339))
 
 	if fr.Price != frResult.Price {
 		t.Errorf("Getting updated freight_region, price: %v, want %v", frResult.Price, fr.Price)
 	}
+	fr.ID = frResult.ID
 
 	// Not worked.
 	// strQuery := fmt.Sprintf("INSERT INTO freight_region(region, weight, deadline, price, created_at, updated_at) VALUES(\"%s\", %v, %v, %v, \"%s\", \"%s\")", fr.region, fr.weight, fr.deadline, fr.price, nowFormated, nowFormated)
 	// strQueryConflit := fmt.Sprintf("%s ON CONFLICT DO UPDATE SET price=%v", strQuery, fr.price)
 }
 
-// Get all freight regions.
-func TestGetAllFreightRegion(t *testing.T) {
-	frS, err := getAllFreightRegion()
-	if err != nil {
-		t.Errorf("TestGetAllFreightRegion(). %s", err)
+// Get freight region by id.
+func TestGetFreightRegionById(t *testing.T) {
+	fr, ok := getFreightRegionById(fr.ID)
+	if !ok {
+		t.Errorf("Get freight region by id returned not ok.")
 	}
-	frSLen := len(frS)
-	if frSLen == 0 {
-		t.Errorf("freigh_region rows: %v, want > 0.", frSLen)
+	if fr.Region == "" {
+		t.Errorf("region: %s, want not \"\".", fr.Region)
 	}
-	validFreightRegionId = frS[0].ID
-	// log.Printf("frS: %+v", frS)
+}
+
+// Update freight region.
+func TestUpdateFreightRegion(t *testing.T) {
+	ok := updateFreightRegion(&fr)
+	if !ok {
+		t.Error("Update freight region retuned not ok.")
+	}
+}
+
+// Delete freight region.
+func TestDeleteFreightRegion(t *testing.T) {
+	ok := deleteFreightRegion(fr.ID)
+	if !ok {
+		t.Error("Delete freight region retuned not ok.")
+	}
 }
 
 // Get freight region by region and weight.
@@ -242,26 +263,6 @@ func TestGetFreightRegionByCEPAndWeight(t *testing.T) {
 		if pFr.Price <= 0 {
 			t.Errorf("Getting freight region by CEP and weight, Price must be > 0")
 		}
-	}
-}
-
-// Get freight region by id.
-func TestGetFreightRegionById(t *testing.T) {
-	fr, err := getFreightRegionById(validFreightRegionId)
-	if err != nil {
-		t.Errorf(" TestGetFreightRegionById(). %s", err)
-	}
-	if fr.Region == "" {
-		t.Errorf("region: %s, want not \"\".", fr.Region)
-	}
-	// log.Printf("fr: %+v", fr)
-}
-
-// Delete freight region.
-func TestDelFreightRegion(t *testing.T) {
-	err := delFreightRegion(validFreightRegionId)
-	if err != nil {
-		t.Error(err)
 	}
 }
 
