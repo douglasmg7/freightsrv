@@ -282,7 +282,7 @@ func TestDeleteMotoboyFreightAPI(t *testing.T) {
 // Update motoboy freight.
 func TestUpdateMotoboyFreightAPI(t *testing.T) {
 	// Url.
-	url := "/freightsrv/motoboy-freight/4"
+	url := "/freightsrv/motoboy-freight"
 
 	// Data.
 	fr := motoboyFreight{

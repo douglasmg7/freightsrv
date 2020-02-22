@@ -121,6 +121,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
 	// Log configuration.
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
@@ -140,6 +141,7 @@ func init() {
 	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunka"}))
 	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
+
 	// Motoboy.
 	router.GET("/freightsrv/motoboy-freights", checkAuthorization(getAllMotoboyFreightHandler, []string{"zunka"}))
 	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(getMotoboyFreightHandler, []string{"zunka"}))
@@ -194,7 +196,7 @@ func main() {
 	// Create server.
 	server := &http.Server{
 		Addr:    address,
-		Handler: router,
+		Handler: newLogger(router),
 		// ErrorLog:     logger,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -278,7 +280,7 @@ type logger struct {
 // Handle interface.
 // todo - why DELETE is logging twice?
 func (l *logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// log.Printf("%s %s - begin", req.Method, req.URL.Path)
+	log.Printf("%s %s - begin", req.Method, req.URL.Path)
 	start := time.Now()
 	l.handler.ServeHTTP(w, req)
 	log.Printf("%s %s %v", req.Method, req.URL.Path, time.Since(start))

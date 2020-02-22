@@ -142,6 +142,7 @@ func createMotoboyFreight(freight *motoboyFreight) bool {
 
 // Delete motoboy freight.
 func deleteMotoboyFreight(id int) bool {
+	// log.Printf("DELETE FROM motoboy_freight WHERE id=%d", id)
 	stm := "DELETE FROM motoboy_freight WHERE id=?"
 	result, err := sql3DB.Exec(stm, id)
 	if checkError(err) {
