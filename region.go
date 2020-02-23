@@ -110,8 +110,9 @@ func createFreightRegion(fr *freightRegion) bool {
 // Update freight region.
 func updateFreightRegion(fr *freightRegion) bool {
 	// log.Printf("UPDATE freight_region SET price=%d WHERE region=%v AND weight=%d AND deadline=%d", fr.Price, fr.Region, fr.Weight, fr.Deadline)
-	stm := "UPDATE freight_region SET price=? WHERE region=? AND weight=? AND deadline=?"
-	result, err := sql3DB.Exec(stm, fr.Price, fr.Region, fr.Weight, fr.Deadline)
+	// stm := "UPDATE freight_region SET price=? WHERE region=? AND weight=? AND deadline=?"
+	stm := "UPDATE freight_region SET region=?, weight=?, deadline=?, price=? WHERE id=?"
+	result, err := sql3DB.Exec(stm, fr.Region, fr.Weight, fr.Deadline, fr.Price, fr.ID)
 	if checkError(err) {
 		return false
 	}
