@@ -169,7 +169,6 @@ var regionFreightTemp = freightRegion{
 
 // Create region freight.
 func TestCreateRegionFreightAPI(t *testing.T) {
-	t.SkipNow()
 	// Url.
 	url := "/freightsrv/region-freight"
 
@@ -251,7 +250,7 @@ func TestGetOneRegionFreightAPI(t *testing.T) {
 	freight := freightRegion{}
 	err = json.Unmarshal(res.Body.Bytes(), &freight)
 	if err != nil {
-		t.Errorf("Err: %s", err)
+		t.Error(err)
 		return
 	}
 	// log.Printf("Freight: %+v", freight)
@@ -262,9 +261,49 @@ func TestGetOneRegionFreightAPI(t *testing.T) {
 	}
 }
 
-// update
+// Update region freight.
+func TestUpdateRegionFreightAPI(t *testing.T) {
+	// Url.
+	url := "/freightsrv/region-freight"
 
-// delete
+	regionFreightTemp.Price = 54321
+	frJSON, err := json.Marshal(regionFreightTemp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+		return
+	}
+}
+
+// Delete region freight.
+func TestDeleteRegionFreightAPI(t *testing.T) {
+	// Url.
+	url := fmt.Sprintf("/freightsrv/region-freight/%d", regionFreightTemp.ID)
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+		return
+	}
+}
 
 /******************************************************************************
 *	MOTOBOY
@@ -359,35 +398,6 @@ func TestCreateMotoboyFreightAPI(t *testing.T) {
 	}
 }
 
-// Delete motoboy freight.
-func TestDeleteMotoboyFreightAPI(t *testing.T) {
-	// Get city id to delete.
-	city := "Nova Lima"
-	freight, ok := getMotoboyFreightByLocation("mg", city)
-	if !ok {
-		t.Errorf("No city %s to test delete.", city)
-	}
-	// fmt.Printf("freight to delete: %+v", freight)
-
-	// Url.
-	url := fmt.Sprintf("/freightsrv/motoboy-freight/%d", freight.ID)
-
-	// Request.
-	req, _ := http.NewRequest(http.MethodDelete, url, nil)
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-	res := httptest.NewRecorder()
-	router.ServeHTTP(res, req)
-
-	// log.Printf("res.Body: %s", res.Body.String())
-
-	want := 200
-	if res.Code != want {
-		t.Errorf("got:  %v, want  %v\n", res.Code, want)
-		t.Errorf("res.Body:  %s\n", res.Body.String())
-	}
-}
-
 // Update motoboy freight.
 func TestUpdateMotoboyFreightAPI(t *testing.T) {
 	// Url.
@@ -407,6 +417,35 @@ func TestUpdateMotoboyFreightAPI(t *testing.T) {
 
 	// Request.
 	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	want := 200
+	if res.Code != want {
+		t.Errorf("got:  %v, want  %v\n", res.Code, want)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+	}
+}
+
+// Delete motoboy freight.
+func TestDeleteMotoboyFreightAPI(t *testing.T) {
+	// Get city id to delete.
+	city := "Nova Lima"
+	freight, ok := getMotoboyFreightByLocation("mg", city)
+	if !ok {
+		t.Errorf("No city %s to test delete.", city)
+	}
+	// fmt.Printf("freight to delete: %+v", freight)
+
+	// Url.
+	url := fmt.Sprintf("/freightsrv/motoboy-freight/%d", freight.ID)
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
 	req.SetBasicAuth("bypass", "123456")
 	req.Header.Set("Content-Type", "application/json")
 	res := httptest.NewRecorder()

@@ -174,7 +174,7 @@ func TestCreateFreightRegion(t *testing.T) {
 		Region:   "south",
 		Weight:   4000,
 		Deadline: 2,
-		Price:    7845,
+		Price:    34567,
 	}
 
 	// Create freight.
@@ -213,6 +213,7 @@ func TestGetFreightRegionById(t *testing.T) {
 
 // Update freight region.
 func TestUpdateFreightRegion(t *testing.T) {
+	fr.Price = 76543
 	ok := updateFreightRegion(&fr)
 	if !ok {
 		t.Error("Update freight region retuned not ok.")

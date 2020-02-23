@@ -152,8 +152,8 @@ func init() {
 	// Region.
 	router.GET("/freightsrv/region-freights", checkAuthorization(getAllRegionFreightHandler, []string{"zunka"}))
 	router.GET("/freightsrv/region-freight/:id", checkAuthorization(getOneRegionFreightHandler, []string{"zunka"}))
-	// router.DELETE("/freightsrv/region-freight/:id", checkAuthorization(deleteRegionFreightHandler, []string{"zunka"}))
-	// router.PUT("/freightsrv/region-freight", checkAuthorization(updateRegionFreightHandler, []string{"zunka"}))
+	router.DELETE("/freightsrv/region-freight/:id", checkAuthorization(deleteRegionFreightHandler, []string{"zunka"}))
+	router.PUT("/freightsrv/region-freight", checkAuthorization(updateRegionFreightHandler, []string{"zunka"}))
 	router.POST("/freightsrv/region-freight", checkAuthorization(createRegionFreightHandler, []string{"zunka"}))
 }
 

@@ -9,7 +9,7 @@ import (
 type freightRegion struct {
 	ID        int       `db:"id" json:"id"`
 	Region    string    `db:"region" json:"region"`
-	Weight    int       `db:"weight" json:"wight"`      // g
+	Weight    int       `db:"weight" json:"weight"`     // g
 	Deadline  int       `db:"deadline" json:"deadline"` // days
 	Price     int       `db:"price" json:"price"`       // R$ X 100
 	CreatedAt time.Time `db:"created_at" json:"-"`
@@ -109,7 +109,7 @@ func createFreightRegion(fr *freightRegion) bool {
 
 // Update freight region.
 func updateFreightRegion(fr *freightRegion) bool {
-	// Update.
+	// log.Printf("UPDATE freight_region SET price=%d WHERE region=%v AND weight=%d AND deadline=%d", fr.Price, fr.Region, fr.Weight, fr.Deadline)
 	stm := "UPDATE freight_region SET price=? WHERE region=? AND weight=? AND deadline=?"
 	result, err := sql3DB.Exec(stm, fr.Price, fr.Region, fr.Weight, fr.Deadline)
 	if checkError(err) {
@@ -128,6 +128,7 @@ func updateFreightRegion(fr *freightRegion) bool {
 
 // Delete freight region.
 func deleteFreightRegion(id int) bool {
+	// log.Printf("DELETE FROM freight_region WHERE id=%d", id)
 	stm := "DELETE FROM freight_region WHERE id=?"
 	result, err := sql3DB.Exec(stm, id)
 	if checkError(err) {

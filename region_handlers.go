@@ -9,6 +9,31 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// Create region freight.
+func createRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	// Data.
+	fr := freightRegion{}
+	body, err := ioutil.ReadAll(req.Body)
+	if checkError(err) {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+	// log.Printf("body: %v\n", string(body))
+	err = json.Unmarshal(body, &fr)
+	if checkError(err) {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+
+	// Create.
+	ok := createFreightRegion(&fr)
+	if !ok {
+		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(200)
+}
+
 // All region freights.
 func getAllRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	// Get data.
@@ -55,8 +80,8 @@ func getOneRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps htt
 	w.Write(frJSON)
 }
 
-// Create region freight.
-func createRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+// Update region freight.
+func updateRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	// Data.
 	fr := freightRegion{}
 	body, err := ioutil.ReadAll(req.Body)
@@ -71,8 +96,8 @@ func createRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps htt
 		return
 	}
 
-	// Create.
-	ok := createFreightRegion(&fr)
+	// Update.
+	ok := updateFreightRegion(&fr)
 	if !ok {
 		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
 		return
@@ -82,40 +107,13 @@ func createRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps htt
 
 // Delete region freight.
 func deleteRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	// log.Printf("*** DELETE *** \n")
 	id, err := strconv.Atoi(ps.ByName("id"))
 	if checkError(err) {
 		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
 		return
 	}
 	// Delete.
-	ok := deleteMotoboyFreight(id)
-	if !ok {
-		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(200)
-}
-
-// Update region freight.
-func updateRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	// log.Printf("*** PUT *** %v\n", ps.ByName("id"))
-	// Data.
-	fr := motoboyFreight{}
-	body, err := ioutil.ReadAll(req.Body)
-	if checkError(err) {
-		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
-		return
-	}
-	// log.Printf("body: %v\n", string(body))
-	err = json.Unmarshal(body, &fr)
-	if checkError(err) {
-		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
-		return
-	}
-
-	// Update.
-	ok := updateMotoboyFreightById(&fr)
+	ok := deleteFreightRegion(id)
 	if !ok {
 		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
 		return
