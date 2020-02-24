@@ -160,7 +160,7 @@ func TFreightAPI(t *testing.T, client Client) {
 /******************************************************************************
 *	Region freights
 *******************************************************************************/
-var regionFreightTemp = freightRegion{
+var regionFreightTemp = regionFreight{
 	Region:   "south",
 	Weight:   4000,
 	Deadline: 8,
@@ -209,7 +209,7 @@ func TestGetAllRegionFreightsAPI(t *testing.T) {
 		return
 	}
 
-	freights := []freightRegion{}
+	freights := []regionFreight{}
 	err = json.Unmarshal(res.Body.Bytes(), &freights)
 	if err != nil {
 		t.Errorf("Err: %s", err)
@@ -247,7 +247,7 @@ func TestGetOneRegionFreightAPI(t *testing.T) {
 		return
 	}
 
-	freight := freightRegion{}
+	freight := regionFreight{}
 	err = json.Unmarshal(res.Body.Bytes(), &freight)
 	if err != nil {
 		t.Error(err)

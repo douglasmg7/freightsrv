@@ -3,20 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"time"
 )
 
-type freightRegion struct {
-	ID        int       `db:"id" json:"id"`
-	Region    string    `db:"region" json:"region"`
-	Weight    int       `db:"weight" json:"weight"`     // g
-	Deadline  int       `db:"deadline" json:"deadline"` // days
-	Price     int       `db:"price" json:"price"`       // R$ X 100
-	CreatedAt time.Time `db:"created_at" json:"-"`
-	UpdatedAt time.Time `db:"updated_at" json:"-"`
-}
-
-func getAllFreightRegion() (frS []freightRegion, ok bool) {
+func getAllFreightRegion() (frS []regionFreight, ok bool) {
 	err = sql3DB.Select(&frS, "SELECT * FROM freight_region ORDER BY region, weight, deadline")
 	if checkError(err) {
 		return frS, false
@@ -56,7 +45,7 @@ func getFreightRegionByCEPAndWeight(c chan *freightsOk, cep string, weight int) 
 }
 
 // Get region freight by region.
-func getFreightRegionByRegionAndWeight(region string, weight int) (frs []freightRegion, ok bool) {
+func getFreightRegionByRegionAndWeight(region string, weight int) (frs []regionFreight, ok bool) {
 	var weightSel int
 	// Get min weight freight for current weight.
 	// log.Printf("SELECT MIN(weight) FROM freight_region WHERE region=%s AND weight>=%d ORDER BY deadline", region, weight)
@@ -80,7 +69,7 @@ func getFreightRegionByRegionAndWeight(region string, weight int) (frs []freight
 }
 
 // Get region freight by id.
-func getFreightRegionById(id int) (fr freightRegion, ok bool) {
+func getFreightRegionById(id int) (fr regionFreight, ok bool) {
 	err = sql3DB.Get(&fr, "SELECT * FROM freight_region WHERE id=?", id)
 	if checkError(err) {
 		return fr, false
@@ -89,7 +78,7 @@ func getFreightRegionById(id int) (fr freightRegion, ok bool) {
 }
 
 // Create freight region.
-func createFreightRegion(fr *freightRegion) bool {
+func createFreightRegion(fr *regionFreight) bool {
 	stm := "INSERT INTO freight_region(region, weight, deadline, price) VALUES(?, ?, ?, ?)"
 	result, err := sql3DB.Exec(stm, fr.Region, fr.Weight, fr.Deadline, fr.Price)
 	if checkError(err) {
@@ -108,7 +97,7 @@ func createFreightRegion(fr *freightRegion) bool {
 }
 
 // Update freight region.
-func updateFreightRegion(fr *freightRegion) bool {
+func updateFreightRegion(fr *regionFreight) bool {
 	// log.Printf("UPDATE freight_region SET price=%d WHERE region=%v AND weight=%d AND deadline=%d", fr.Price, fr.Region, fr.Weight, fr.Deadline)
 	// stm := "UPDATE freight_region SET price=? WHERE region=? AND weight=? AND deadline=?"
 	stm := "UPDATE freight_region SET region=?, weight=?, deadline=?, price=? WHERE id=?"
@@ -143,7 +132,7 @@ func deleteFreightRegion(id int) bool {
 	return true
 }
 
-// func saveFreightRegion(fr freightRegion) error {
+// func saveFreightRegion(fr regionFreight) error {
 // tx := sql3DB.MustBegin()
 // // Update.
 // uStatement := "UPDATE freight_region SET price=? WHERE region=? AND weight=? AND deadline=?"

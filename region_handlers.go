@@ -12,7 +12,7 @@ import (
 // Create region freight.
 func createRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	// Data.
-	fr := freightRegion{}
+	fr := regionFreight{}
 	body, err := ioutil.ReadAll(req.Body)
 	if checkError(err) {
 		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
@@ -83,7 +83,7 @@ func getOneRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps htt
 // Update region freight.
 func updateRegionFreightHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	// Data.
-	fr := freightRegion{}
+	fr := regionFreight{}
 	body, err := ioutil.ReadAll(req.Body)
 	if checkError(err) {
 		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)

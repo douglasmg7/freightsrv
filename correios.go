@@ -23,15 +23,6 @@ const (
 	CORREIOS_ACKNOWLEDGMENT_RECEIPT = "N" // Aviso de recebimento.
 )
 
-type pack struct {
-	OriginCEP  string `json:"cepOrigin"`
-	DestinyCEP string `json:"cepDestiny"`
-	Weight     int    `json:"weight"` // g.
-	Length     int    `json:"length"` // cm.
-	Height     int    `json:"height"` // cm.
-	Width      int    `json:"width"`  // cm.
-}
-
 func (p *pack) Validate() error {
 
 	regCep := regexp.MustCompile(`^[0-9]{8}$`)

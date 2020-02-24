@@ -153,7 +153,7 @@ func TestGetCorreiosFreightByPack(t *testing.T) {
 // Freight region
 //*****************************************************************************
 var createdFreightRegionID int
-var fr freightRegion
+var fr regionFreight
 
 // Get all freight regions.
 func TestGetAllFreightRegion(t *testing.T) {
@@ -170,7 +170,7 @@ func TestGetAllFreightRegion(t *testing.T) {
 
 // Create freight region.
 func TestCreateFreightRegion(t *testing.T) {
-	fr = freightRegion{
+	fr = regionFreight{
 		Region:   "south",
 		Weight:   4000,
 		Deadline: 2,
@@ -184,7 +184,7 @@ func TestCreateFreightRegion(t *testing.T) {
 	}
 
 	// Check saved data.
-	var frResult freightRegion
+	var frResult regionFreight
 	err = sql3DB.Get(&frResult, "SELECT * FROM freight_region WHERE region=? AND weight=? AND deadline=?", fr.Region, fr.Weight, fr.Deadline)
 	if err != nil {
 		t.Errorf("Getting created freight. %s", err)
