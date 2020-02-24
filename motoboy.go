@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"regexp"
 	"strings"
@@ -74,33 +75,14 @@ func getMotoboyFreightByLocation(state, city string) (mf *motoboyFreight, ok boo
 	mf.City = city
 	mf.NormalizeCity()
 	err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight WHERE state=? AND city_norm=?", mf.State, mf.CityNorm)
+	if err == sql.ErrNoRows {
+		return mf, false
+	}
 	if checkError(err) {
 		return mf, false
 	}
 	// log.Printf("by state and city, mf: %+v", *mf)
 	return mf, true
-}
-
-// Get motoboy freight.
-func getMotoboyFreightOld(mf *motoboyFreight) error {
-	// Find by ID.
-	if mf.ID != 0 {
-		err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight  WHERE id=?", mf.ID)
-		if err != nil {
-			return fmt.Errorf("Getting motoboy_freight by ID. %s", err.Error())
-		}
-		return nil
-	}
-
-	// Find by city.
-	mf.State = "mg"
-	mf.NormalizeCity()
-	err = sql3DB.Get(mf, "SELECT * FROM motoboy_freight WHERE state=? AND city_norm=?", mf.State, mf.CityNorm)
-	if err != nil {
-		return fmt.Errorf("getting motoboy freight by city. %s", err.Error())
-	}
-	// log.Printf("mf: %+v", mf)
-	return nil
 }
 
 // Update motoboy freight by id.

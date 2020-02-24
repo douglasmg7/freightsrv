@@ -50,31 +50,6 @@ var production bool
 // Brazil time location.
 var brLocation *time.Location
 
-// type freight struct {
-// Carrier  string  `xml:"carrier"`
-// Service  string  `xml:"service"`
-// Price    float64 `xml:"price"`
-// Deadline int     `xml:"deadLine"` // Days.
-// }
-
-type freight struct {
-	Carrier  string  `json:"carrier"`
-	Service  string  `json:"service"`
-	Price    float64 `json:"price"`
-	Deadline int     `json:"deadLine"` // Days.
-}
-
-type freightInfo struct {
-	Carrier  string  `json:"carrier"`
-	Price    float64 `json:"price"`
-	Deadline int     `json:"deadLine"` // Days.
-}
-
-type freightsOk struct {
-	Freights []*freight
-	Ok       bool
-}
-
 // Text normalization.
 var trans transform.Transformer
 
@@ -287,7 +262,7 @@ type logger struct {
 // Handle interface.
 // todo - why DELETE is logging twice?
 func (l *logger) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Printf("%s %s - begin", req.Method, req.URL.Path)
+	// log.Printf("%s %s - begin", req.Method, req.URL.Path)
 	start := time.Now()
 	l.handler.ServeHTTP(w, req)
 	log.Printf("%s %s %v", req.Method, req.URL.Path, time.Since(start))

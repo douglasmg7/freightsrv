@@ -2,14 +2,22 @@ package main
 
 import "time"
 
-type pack struct {
-	CEPOrigin  string `json:"cepOrigin"`
-	CEPDestiny string `json:"cepDestiny"`
-	Dealer     string `json:"dealer"` // Aldo, Allnations, etc...
-	Weight     int    `json:"weight"` // g.
-	Length     int    `json:"length"` // cm.
-	Height     int    `json:"height"` // cm.
-	Width      int    `json:"width"`  // cm.
+type freight struct {
+	Carrier  string  `json:"carrier"`
+	Service  string  `json:"service"`
+	Price    float64 `json:"price"`
+	Deadline int     `json:"deadline"` // Days.
+}
+
+type freightInfo struct {
+	Carrier  string  `json:"carrier"`
+	Price    float64 `json:"price"`
+	Deadline int     `json:"deadline"` // Days.
+}
+
+type freightsOk struct {
+	Freights []*freight
+	Ok       bool
 }
 
 type regionFreight struct {
@@ -31,4 +39,14 @@ type motoboyFreight struct {
 	Price     int       `db:"price" json:"price"`       // R$ X 100
 	CreatedAt time.Time `db:"created_at" json:"-"`
 	UpdatedAt time.Time `db:"updated_at" json:"-"`
+}
+
+type pack struct {
+	Dealer     string `json:"dealer"` // Aldo, Allnations, etc...
+	CEPOrigin  string `json:"cepOrigin"`
+	CEPDestiny string `json:"cepDestiny"`
+	Weight     int    `json:"weight"` // g.
+	Length     int    `json:"length"` // cm.
+	Height     int    `json:"height"` // cm.
+	Width      int    `json:"width"`  // cm.
 }
