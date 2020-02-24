@@ -85,20 +85,126 @@ func Test_InvalidPassAuth(t *testing.T) {
 	}
 }
 
-// Freight for Zunka.
-func TestFreightZunkaAPI(t *testing.T) {
-	TFreightAPI(t, Zunka)
+/******************************************************************************
+* Freights
+*******************************************************************************/
+// Zunka freight no local stock, equipment from Aldo.
+func Test_FreightZunkaNoLocalStockAldoProductAPI(t *testing.T) {
+	p := pack{
+		Dealer: "aldo",
+		// CEPDestiny: "5-76-25-000",
+		CEPDestiny: "31170210",
+		Weight:     1500, // g.
+		Length:     20,   // cm.
+		Height:     30,   // cm.
+		Width:      40,   // cm.
+	}
+	err := p.Validate()
+	if err != nil {
+		t.Errorf("Invalid pack. %v", err)
+	}
+
+	reqBody, err := json.Marshal(p)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frInfoS := []freightInfo{}
+	json.Unmarshal(res.Body.Bytes(), &frInfoS)
+	// log.Printf("frInfoS: %+v", frInfoS)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreiosOrTransporter := true
+
+	for _, frInfo := range frInfoS {
+		if frInfo.Carrier == "Correios" || frInfo.Carrier == "Transportadora" {
+			haveCorreiosOrTransporter = true
+		}
+		if frInfo.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreiosOrTransporter {
+		t.Errorf("got:  %q, no Correios neither Transportadora carrier", got)
+	}
+	if haveMotoboy {
+		t.Errorf("Can have Motoboy carrier, got:  %q", got)
+	}
 }
 
-// Freight for Zoom.
-func TestFreightZoomAPI(t *testing.T) {
-	TFreightAPI(t, Zoom)
+// Zunka freight local stock to BH.
+func Test_FreightZunkaBHLocalStockAPI(t *testing.T) {
+	p := pack{
+		CEPDestiny: "31170210",
+		Weight:     1500, // g.
+		Length:     20,   // cm.
+		Height:     30,   // cm.
+		Width:      40,   // cm.
+	}
+	err := p.Validate()
+	if err != nil {
+		t.Errorf("Invalid pack. %v", err)
+	}
+
+	reqBody, err := json.Marshal(p)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frInfoS := []freightInfo{}
+	json.Unmarshal(res.Body.Bytes(), &frInfoS)
+	// log.Printf("frInfoS: %+v", frInfoS)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreiosOrTransporter := true
+
+	for _, frInfo := range frInfoS {
+		if frInfo.Carrier == "Correios" || frInfo.Carrier == "Transportadora" {
+			haveCorreiosOrTransporter = true
+		}
+		if frInfo.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreiosOrTransporter {
+		t.Errorf("got:  %q, no Correios neither Transportadora carrier", got)
+	}
+	if !haveMotoboy {
+		t.Errorf("got:  %q, no Motoboy carrier", got)
+	}
 }
 
 // Freight deadline and price.
-func TFreightAPI(t *testing.T, client Client) {
+func TestFreightZoomAPI(t *testing.T) {
+	t.SkipNow()
 	p := pack{
-		DestinyCEP: "5-76-25-000",
+		CEPDestiny: "5-76-25-000",
 		// DestinyCEP: "31170210",
 		Weight: 1500, // g.
 		Length: 20,   // cm.
@@ -116,17 +222,9 @@ func TFreightAPI(t *testing.T, client Client) {
 	}
 	// log.Println("request body: " + string(reqBody))
 
-	var url string
-	var want []string
+	url := "/freightsrv/freights/zoom"
+	want := []string{"Correios", "Transportadora"}
 
-	switch client {
-	case Zunka:
-		url = "/freightsrv/freights/zunka"
-		want = []string{"Correios", "Transportadora", "Motoboy"}
-	case Zoom:
-		url = "/freightsrv/freights/zoom"
-		want = []string{"Correios", "Transportadora"}
-	}
 	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
 
 	req.SetBasicAuth("bypass", "123456")

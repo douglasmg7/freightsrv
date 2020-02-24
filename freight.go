@@ -3,8 +3,9 @@ package main
 import "time"
 
 type pack struct {
-	OriginCEP  string `json:"cepOrigin"`
-	DestinyCEP string `json:"cepDestiny"`
+	CEPOrigin  string `json:"cepOrigin"`
+	CEPDestiny string `json:"cepDestiny"`
+	Dealer     string `json:"dealer"` // Aldo, Allnations, etc...
 	Weight     int    `json:"weight"` // g.
 	Length     int    `json:"length"` // cm.
 	Height     int    `json:"height"` // cm.

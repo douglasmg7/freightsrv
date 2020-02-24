@@ -116,7 +116,7 @@ func TestGetRegionByCEP(t *testing.T) {
 func TestGetCorreiosFreightByPack(t *testing.T) {
 	// testXML()
 	p := &pack{
-		DestinyCEP: cepNortheast,
+		CEPDestiny: cepNortheast,
 		Weight:     1500, // g.
 		Length:     20,   // cm.
 		Height:     30,   // cm.

@@ -28,18 +28,18 @@ func (p *pack) Validate() error {
 	regCep := regexp.MustCompile(`^[0-9]{8}$`)
 
 	// Origin CEP.
-	p.OriginCEP = strings.ReplaceAll(p.OriginCEP, "-", "")
-	if p.OriginCEP == "" {
-		p.OriginCEP = CEP_ORIGIN
+	p.CEPOrigin = strings.ReplaceAll(p.CEPOrigin, "-", "")
+	if p.CEPOrigin == "" {
+		p.CEPOrigin = CEP_ORIGIN
 	}
-	if !regCep.MatchString(p.OriginCEP) {
-		return fmt.Errorf("Origin CEP \"%v\" invalid.", p.OriginCEP)
+	if !regCep.MatchString(p.CEPOrigin) {
+		return fmt.Errorf("Origin CEP \"%v\" invalid.", p.CEPOrigin)
 	}
 
 	// Destiny CEP.
-	p.DestinyCEP = strings.ReplaceAll(p.DestinyCEP, "-", "")
-	if !regCep.MatchString(p.DestinyCEP) {
-		return fmt.Errorf("Destiny CEP \"%v\" invalid.", p.DestinyCEP)
+	p.CEPDestiny = strings.ReplaceAll(p.CEPDestiny, "-", "")
+	if !regCep.MatchString(p.CEPDestiny) {
+		return fmt.Errorf("Destiny CEP \"%v\" invalid.", p.CEPDestiny)
 	}
 
 	// Weight in kg.
@@ -114,7 +114,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 	}
 
 	// Get from cache.
-	temp, ok := getCorreiosCache(p.OriginCEP, p.DestinyCEP)
+	temp, ok := getCorreiosCache(p.CEPOrigin, p.CEPDestiny)
 	if ok {
 		// log.Printf("result: %+v", temp)
 		result.Freights = temp
@@ -127,8 +127,8 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 	reqBody := []byte(`nCdEmpresa=` + CORREIOS_COMPANY_ADMIN_CODE +
 		`&sDsSenha=` + CORREIOS_COMPANY_PASSWORD +
 		`&nCdServico=` + CORREIOS_SERVICES_CODE +
-		`&sCepOrigem=` + p.OriginCEP +
-		`&sCepDestino=` + p.DestinyCEP +
+		`&sCepOrigem=` + p.CEPOrigin +
+		`&sCepDestino=` + p.CEPDestiny +
 		`&nVlPeso=` + strconv.Itoa(p.Weight/1000) +
 		`&nCdFormato=` + CORREIOS_PACKAGE_FORMAT +
 		`&nVlComprimento=` + strconv.Itoa(p.Length) +
@@ -184,7 +184,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 	for _, service := range rCorreios.Result.Services {
 		// log.Printf("service: %+v", service)
 		if service.Error != 0 {
-			log.Printf("[warning] [correios] origin: %s, destiny: %s, code: %d, error: %d, message: %v", p.OriginCEP, p.DestinyCEP, service.Code, service.Error, service.MsgError)
+			log.Printf("[warning] [correios] origin: %s, destiny: %s, code: %d, error: %d, message: %v", p.CEPOrigin, p.CEPDestiny, service.Code, service.Error, service.MsgError)
 			continue
 		}
 		// Convert to float64.
@@ -201,7 +201,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 	// log.Printf("result.Freights: %+v", result.Freights)
 	// Not cache empty values.
 	if len(result.Freights) > 0 {
-		setCorreiosCache(p.OriginCEP, p.DestinyCEP, result.Freights)
+		setCorreiosCache(p.CEPOrigin, p.CEPDestiny, result.Freights)
 	}
 	result.Ok = true
 	c <- result
