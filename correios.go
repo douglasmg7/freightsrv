@@ -184,7 +184,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 	for _, service := range rCorreios.Result.Services {
 		// log.Printf("service: %+v", service)
 		if service.Error != 0 {
-			log.Printf("[warning] [correios] origin: %s, destiny: %s, code: %d, error: %d, message: %v", p.CEPOrigin, p.CEPDestiny, service.Code, service.Error, service.MsgError)
+			log.Printf("[warning] [correios] pack: %+v, code: %d, error: %d, message: %v", p, service.Code, service.Error, service.MsgError)
 			continue
 		}
 		// Convert to float64.
