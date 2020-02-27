@@ -3,16 +3,19 @@ package main
 import "time"
 
 type freight struct {
-	Carrier  string  `json:"carrier"`
-	Service  string  `json:"service"`
-	Price    float64 `json:"price"`
-	Deadline int     `json:"deadline"` // Days.
+	Carrier     string  `json:"carrier"`
+	ServiceCode string  `json:"serviceCode"`
+	ServiceDesc string  `json:"serviceDesc"`
+	Price       float64 `json:"price"`
+	Deadline    int     `json:"deadline"` // Days.
 }
 
 type freightInfo struct {
-	Carrier  string  `json:"carrier"`
-	Price    float64 `json:"price"`
-	Deadline int     `json:"deadline"` // Days.
+	Carrier     string  `json:"carrier"`
+	ServiceCode string  `json:"serviceCode"`
+	ServiceDesc string  `json:"serviceDesc"`
+	Price       float64 `json:"price"`
+	Deadline    int     `json:"deadline"` // Days.
 }
 
 type freightsOk struct {

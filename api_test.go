@@ -133,6 +133,16 @@ func Test_FreightZunkaNoLocalStockAldoProductAPI(t *testing.T) {
 		if frInfo.Carrier == "Correios" || frInfo.Carrier == "Transportadora" {
 			haveCorreiosOrTransporter = true
 		}
+		if frInfo.Carrier == "Correios" {
+			if frInfo.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if frInfo.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		}
 		if frInfo.Carrier == "Motoboy" {
 			haveMotoboy = true
 		}
@@ -187,6 +197,16 @@ func Test_FreightZunkaBHLocalStockAPI(t *testing.T) {
 	for _, frInfo := range frInfoS {
 		if frInfo.Carrier == "Correios" || frInfo.Carrier == "Transportadora" {
 			haveCorreiosOrTransporter = true
+		}
+		if frInfo.Carrier == "Correios" {
+			if frInfo.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if frInfo.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
 		}
 		if frInfo.Carrier == "Motoboy" {
 			haveMotoboy = true

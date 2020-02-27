@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,20 +78,22 @@ func getViaCEPAddressCache(pCep *string) (*string, bool) {
 //****************************************************************************
 //	CORREIOS FREIGHTS
 //****************************************************************************
+func makeCorreiosKey(p *pack) string {
+	return "freightsrv-correios-estimate-freight-" + strings.ReplaceAll(p.CEPOrigin, "-", "") + "-" + strings.ReplaceAll(p.CEPDestiny, "-", "") + "-" + strconv.Itoa(p.Weight) + "-" + strconv.Itoa(p.Length) + "-" + strconv.Itoa(p.Height) + "-" + strconv.Itoa(p.Width)
+}
+
 // Set Correios estimate delivery.
-func setCorreiosCache(cepOrigin, cepDestiny string, frS []*freight) {
-	key := "freightsrv-correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
+func setCorreiosCache(p *pack, frS []*freight) {
 	frSJson, err := json.Marshal(frS)
 	if checkError(err) {
 		return
 	}
-	_ = redisSet(key, string(frSJson), time.Hour*2)
+	_ = redisSet(makeCorreiosKey(p), string(frSJson), time.Hour*2)
 }
 
 // Get Correios estimate delivery.
-func getCorreiosCache(cepOrigin, cepDestiny string) (frS []*freight, ok bool) {
-	key := "freightsrv-correios-estimate-delivery-" + strings.ReplaceAll(cepOrigin, "-", "") + "-" + strings.ReplaceAll(cepDestiny, "-", "")
-	frSJson := redisGet(key)
+func getCorreiosCache(p *pack) (frS []*freight, ok bool) {
+	frSJson := redisGet(makeCorreiosKey(p))
 	// No key.
 	if frSJson == "" {
 		return frS, false

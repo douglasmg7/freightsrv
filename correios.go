@@ -15,12 +15,12 @@ import (
 
 const (
 	CORREIOS_URL                    = `http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPrecoPrazo`
-	CORREIOS_SERVICES_CODE          = "4596, 4553"
-	CORREIOS_PACKAGE_FORMAT         = "1" // 1 - caixa/pacote, 2 - rolo/prisma, 3 - Envelope.
-	CORREIOS_PACKAGE_DIAMETER       = "0" // Diâmetro em cm.
-	CORREIOS_OWN_HAND               = "N" // Se a encomenda será entregue com o serviço adicional mão própria.
-	CORREIOS_DECLARED_VALUE         = "0" // Valor delcarado.
-	CORREIOS_ACKNOWLEDGMENT_RECEIPT = "N" // Aviso de recebimento.
+	CORREIOS_SERVICES_CODE          = "4596, 4553" // 4596-PAC, 4553-SEDEX
+	CORREIOS_PACKAGE_FORMAT         = "1"          // 1 - caixa/pacote, 2 - rolo/prisma, 3 - Envelope.
+	CORREIOS_PACKAGE_DIAMETER       = "0"          // Diâmetro em cm.
+	CORREIOS_OWN_HAND               = "N"          // Se a encomenda será entregue com o serviço adicional mão própria.
+	CORREIOS_DECLARED_VALUE         = "0"          // Valor delcarado.
+	CORREIOS_ACKNOWLEDGMENT_RECEIPT = "N"          // Aviso de recebimento.
 )
 
 func (p *pack) Validate() error {
@@ -114,7 +114,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 	}
 
 	// Get from cache.
-	temp, ok := getCorreiosCache(p.CEPOrigin, p.CEPDestiny)
+	temp, ok := getCorreiosCache(p)
 	if ok {
 		// log.Printf("result: %+v", temp)
 		result.Freights = temp
@@ -187,7 +187,16 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 			log.Printf("[warning] [correios] pack: %+v, code: %d, error: %d, message: %v", p, service.Code, service.Error, service.MsgError)
 			continue
 		}
-		// Convert to float64.
+		// Service description.
+		var serviceDesc string
+		switch service.Code {
+		case 4596:
+			serviceDesc = "PAC"
+		case 4553:
+			serviceDesc = "SEDEX"
+		}
+
+		// Convert price to float64.
 		price := strings.ReplaceAll(service.Price, ".", "")
 		price = strings.ReplaceAll(service.Price, ",", ".")
 		priceF, err := strconv.ParseFloat(price, 64)
@@ -195,13 +204,13 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 			continue
 		}
 		// log.Printf("Price: %v", priceF)
-		result.Freights = append(result.Freights, &freight{Carrier: "Correios", Service: strconv.Itoa(service.Code), Price: priceF, Deadline: service.DeadLine})
+		result.Freights = append(result.Freights, &freight{Carrier: "Correios", ServiceCode: strconv.Itoa(service.Code), ServiceDesc: serviceDesc, Price: priceF, Deadline: service.DeadLine})
 	}
 	// log.Printf("result: %+v", result)
-	// log.Printf("result.Freights: %+v", result.Freights)
+	// log.Printf("result.Freights: %+v", result.Freights[0])
 	// Not cache empty values.
 	if len(result.Freights) > 0 {
-		setCorreiosCache(p.CEPOrigin, p.CEPDestiny, result.Freights)
+		setCorreiosCache(p, result.Freights)
 	}
 	result.Ok = true
 	c <- result

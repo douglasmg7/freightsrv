@@ -137,8 +137,11 @@ func TestGetCorreiosFreightByPack(t *testing.T) {
 		if pFreight.Carrier != want {
 			t.Errorf("Correios freight carrier name, carrier = %q, want %q", pFreight.Carrier, want)
 		}
-		if pFreight.Service == "" {
+		if pFreight.ServiceCode == "" {
 			t.Errorf("Correios freight service code must be != \"\"")
+		}
+		if pFreight.ServiceDesc == "" {
+			t.Errorf("Correios freight service description must be != \"\"")
 		}
 		if pFreight.Price <= 0 {
 			t.Errorf("Correios freight price must be more than 0")

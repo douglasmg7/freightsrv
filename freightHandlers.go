@@ -17,7 +17,7 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 		http.Error(w, "can't read body", http.StatusBadRequest)
 		return
 	}
-	// log.Printf("body: %s", string(body))
+	log.Printf("body: %s", string(body))
 
 	p := pack{}
 
@@ -59,9 +59,11 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 	if frsOkCorreios.Ok {
 		for _, pfr := range frsOkCorreios.Freights {
 			frInfoS = append(frInfoS, freightInfo{
-				Carrier:  pfr.Carrier,
-				Deadline: pfr.Deadline + deadlinePlus,
-				Price:    pfr.Price,
+				Carrier:     pfr.Carrier,
+				ServiceCode: pfr.ServiceCode,
+				ServiceDesc: pfr.ServiceDesc,
+				Deadline:    pfr.Deadline + deadlinePlus,
+				Price:       pfr.Price,
 			})
 			// log.Printf("Correio freight: %+v", *pfr)
 		}
