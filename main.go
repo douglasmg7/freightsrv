@@ -113,6 +113,11 @@ func init() {
 
 	// Init router.
 	router = httprouter.New()
+
+	// Address.
+	router.GET("/freightsrv/address", checkAuthorization(addressHandler, []string{"zunka"}))
+
+	// Freights.
 	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunka"}))
 	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
