@@ -67,7 +67,7 @@ func init() {
 
 	// Check if production mode.
 	for _, arg := range os.Args {
-		if arg == "--production" {
+		if arg == "production" {
 			production = true
 		}
 	}

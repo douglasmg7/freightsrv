@@ -17,7 +17,7 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 		http.Error(w, "can't read body", http.StatusBadRequest)
 		return
 	}
-	log.Printf("body: %s", string(body))
+	// log.Printf("body: %s", string(body))
 
 	p := pack{}
 
