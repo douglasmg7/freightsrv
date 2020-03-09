@@ -64,12 +64,9 @@ func normalizeString(str string) string {
 
 func init() {
 	// log.Printf("args: %+v", os.Args)
-
 	// Check if production mode.
-	for _, arg := range os.Args {
-		if arg == "production" {
-			production = true
-		}
+	if os.Getenv("RUN_MODE") == "production" {
+		production = true
 	}
 
 	// Brazil location.

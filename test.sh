@@ -7,15 +7,22 @@
 # go test -run Handler -args -dev=true
 
 # Default clean cache.
-if [[ $1 != "--cache" ]]; then
+if [[ $1 == "--clean-cache" ]]; then
     echo Cleaning cache...
     KEYS=`redis-cli keys freightsrv-*`
     [[ ! -z $KEYS ]] && redis-cli del $KEYS
+    exit
     # echo $KEYS
     # redis-cli del `redis-cli keys freightsrv-*`
+fi
+
+# Default clean cache.
+if [[ $1 == "--clean-db" ]]; then
+    echo Cleaning db...
     cd bin/db
     ./rcp.sh
     cd ../..
+    exit
 fi
 
 # go test -run otoboy
