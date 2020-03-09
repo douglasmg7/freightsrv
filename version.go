@@ -1,5 +1,6 @@
 package main
 
 const (
-	version string = "0.2.0"
+	// Using environment variable to define run mode.
+	version string = "1.0.0"
 )
