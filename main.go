@@ -115,7 +115,8 @@ func init() {
 	router.GET("/freightsrv/address", checkAuthorization(addressHandler, []string{"zunka"}))
 
 	// Freights.
-	router.GET("/freightsrv", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
+	router.GET("/freightsrv/", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
+	router.GET("/freightsrv/hello", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 	// todo - remove user test from this point.
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"test", "zunka"}))
 	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
