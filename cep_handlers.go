@@ -35,7 +35,7 @@ func addressHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Para
 		return
 	}
 
-	log.Printf("addressJSON: %s", addressJSON)
+	// log.Printf("addressJSON: %s", addressJSON)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(addressJSON)
 }

@@ -18,6 +18,11 @@ type freightInfo struct {
 	Deadline    int     `json:"deadline"` // Days.
 }
 
+type freightInfoBasic struct {
+	Price    float64 `json:"price"`
+	Deadline int     `json:"deadline"` // Days.
+}
+
 type freightsOk struct {
 	Freights []*freight
 	Ok       bool
@@ -52,4 +57,18 @@ type pack struct {
 	Length     int    `json:"length"` // cm.
 	Height     int    `json:"height"` // cm.
 	Width      int    `json:"width"`  // cm.
+}
+
+type productIdCEP struct {
+	ProductId  string `json:"productId"`
+	CEPDestiny string `json:"cepDestiny"`
+}
+
+// Zunka product.
+type zunkaProduct struct {
+	Dealer string `json:"dealerName"` // Dealer.
+	Length int    `json:"length"`     // cm.
+	Width  int    `json:"width"`      // cm.
+	Height int    `json:"height"`     // cm.
+	Weight int    `json:"weight"`     // grams.
 }

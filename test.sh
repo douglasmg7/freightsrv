@@ -6,7 +6,7 @@
 
 # go test -run Handler -args -dev=true
 
-# Default clean cache.
+# Clean cache.
 if [[ $1 == "--clean-cache" ]]; then
     echo Cleaning cache...
     KEYS=`redis-cli keys freightsrv-*`
@@ -16,7 +16,7 @@ if [[ $1 == "--clean-cache" ]]; then
     # redis-cli del `redis-cli keys freightsrv-*`
 fi
 
-# Default clean cache.
+# Reset db.
 if [[ $1 == "--clean-db" ]]; then
     echo Cleaning db...
     cd bin/db

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,7 +13,7 @@ import (
 
 // Valid no user and no password.
 func Test_NoUserNoPassAuth(t *testing.T) {
-	req, _ := http.NewRequest(http.MethodGet, "/freightsrv", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/freightsrv/", nil)
 
 	// Correct password.
 	res := httptest.NewRecorder()
@@ -30,7 +31,7 @@ func Test_NoUserNoPassAuth(t *testing.T) {
 
 // Valid user and password.
 func Test_ValidUserAndPassAuth(t *testing.T) {
-	req, _ := http.NewRequest(http.MethodGet, "/freightsrv", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/freightsrv/", nil)
 
 	// Correct password.
 	req.SetBasicAuth("test", "1234")
@@ -49,7 +50,7 @@ func Test_ValidUserAndPassAuth(t *testing.T) {
 
 // Invalid user.
 func Test_InvalidUserAuth(t *testing.T) {
-	req, _ := http.NewRequest(http.MethodGet, "/freightsrv", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/freightsrv/", nil)
 
 	// Correct password.
 	req.SetBasicAuth("test-", "1234")
@@ -68,7 +69,7 @@ func Test_InvalidUserAuth(t *testing.T) {
 
 // Invalid password.
 func Test_InvalidPassAuth(t *testing.T) {
-	req, _ := http.NewRequest(http.MethodGet, "/freightsrv", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/freightsrv/", nil)
 
 	// Correct password.
 	req.SetBasicAuth("test", "12345")
@@ -88,7 +89,7 @@ func Test_InvalidPassAuth(t *testing.T) {
 /******************************************************************************
 * Address.
 *******************************************************************************/
-// All region freights.
+// Address by CEP.
 func TestGetAddressByCEPAPI(t *testing.T) {
 	reqBody := strings.NewReader("31170-210")
 	url := "/freightsrv/address"
@@ -259,6 +260,53 @@ func Test_FreightZunkaBHLocalStockAPI(t *testing.T) {
 	if !haveMotoboy {
 		t.Errorf("got:  %q, no Motoboy carrier", got)
 	}
+}
+
+// Freight deadline and price by product.
+func TestProductFreightZoomAPI(t *testing.T) {
+	p := productIdCEP{
+		CEPDestiny: "5-76-25-000",
+		ProductId:  "12345678",
+	}
+
+	reqBody, err := json.Marshal(p)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zoom"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("No status 200. body: %s", res.Body.String())
+		return
+	}
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frInfoBasicS := []freightInfoBasic{}
+	json.Unmarshal(res.Body.Bytes(), &frInfoBasicS)
+	log.Printf("frInfoBasicS: %+v", frInfoBasicS)
+
+	if len(frInfoBasicS) == 0 {
+		t.Errorf("No freight info.")
+		return
+	}
+	if frInfoBasicS[0].Deadline == 0 {
+		t.Errorf("No valid deadline.")
+		return
+	}
+	if frInfoBasicS[0].Price == 0 {
+		t.Errorf("No valid price.")
+		return
+	}
+	// got := res.Body.String()
 }
 
 // Freight deadline and price.
