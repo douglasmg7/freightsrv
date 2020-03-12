@@ -119,7 +119,7 @@ func init() {
 	router.GET("/freightsrv/hello", checkAuthorization(indexHandler, []string{"test", "zunka", "zoom"}))
 	// todo - remove user test from this point.
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"test", "zunka"}))
-	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom"}))
+	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"test", "zoom"}))
 
 	// Motoboy.
 	router.GET("/freightsrv/motoboy-freights", checkAuthorization(getAllMotoboyFreightHandler, []string{"zunka"}))

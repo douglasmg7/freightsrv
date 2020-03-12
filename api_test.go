@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -265,8 +264,10 @@ func Test_FreightZunkaBHLocalStockAPI(t *testing.T) {
 // Freight deadline and price by product.
 func TestProductFreightZoomAPI(t *testing.T) {
 	p := productIdCEP{
-		CEPDestiny: "5-76-25-000",
-		ProductId:  "12345678",
+		// CEPDestiny: "5-76-25-000",
+		CEPDestiny: "31170210",
+		// ProductId:  "5c19eab2fbed5f0a1c19dcc8",
+		ProductId: "5e60eed63d13910785412eba", // Aldo product.
 	}
 
 	reqBody, err := json.Marshal(p)
@@ -285,14 +286,14 @@ func TestProductFreightZoomAPI(t *testing.T) {
 
 	router.ServeHTTP(res, req)
 	if res.Code != 200 {
-		t.Errorf("No status 200. body: %s", res.Body.String())
+		t.Errorf("Status: %d. body: %s", res.Code, res.Body.String())
 		return
 	}
 	// log.Printf("res.Body: %s", res.Body.String())
 
 	frInfoBasicS := []freightInfoBasic{}
 	json.Unmarshal(res.Body.Bytes(), &frInfoBasicS)
-	log.Printf("frInfoBasicS: %+v", frInfoBasicS)
+	// log.Printf("frInfoBasicS: %+v", frInfoBasicS)
 
 	if len(frInfoBasicS) == 0 {
 		t.Errorf("No freight info.")

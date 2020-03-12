@@ -8,3 +8,4 @@ curl -u test:1234 -X GET localhost:8081/freightsrv/freights/zunka \
 		"Height":     30,
 		"Width":      40
 	}'
+printf "\n"

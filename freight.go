@@ -66,9 +66,9 @@ type productIdCEP struct {
 
 // Zunka product.
 type zunkaProduct struct {
-	Dealer string `json:"dealerName"` // Dealer.
-	Length int    `json:"length"`     // cm.
-	Width  int    `json:"width"`      // cm.
-	Height int    `json:"height"`     // cm.
-	Weight int    `json:"weight"`     // grams.
+	Dealer string `json:"dealer"` // Dealer.
+	Length int    `json:"length"` // cm.
+	Width  int    `json:"width"`  // cm.
+	Height int    `json:"height"` // cm.
+	Weight int    `json:"weight"` // grams.
 }

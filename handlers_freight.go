@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -13,19 +16,15 @@ import (
 // Freight for Zunka.
 func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Printf("Error reading body: %v", err)
-		http.Error(w, "can't read body", http.StatusBadRequest)
+	if checkError(err) {
+		http.Error(w, "Error reading body: %v", http.StatusInternalServerError)
 		return
 	}
 	// log.Printf("body: %s", string(body))
-
 	p := pack{}
-
 	err = json.Unmarshal(body, &p)
-	if err != nil {
-		log.Printf("Error unmarshalling body: %v", err)
-		http.Error(w, "can't read body", http.StatusBadRequest)
+	if checkError(err) {
+		http.Error(w, "Error unmarshalling body: %v", http.StatusInternalServerError)
 		return
 	}
 	// log.Printf("pack: %+v", p)
@@ -106,57 +105,90 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	// Get product id and CEP.
 	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Printf("Error reading body: %v", err)
-		http.Error(w, "can't read body", http.StatusBadRequest)
+	if checkError(err) {
+		http.Error(w, "can't read body", http.StatusInternalServerError)
 		return
 	}
 	// log.Printf("body: %s", string(body))
 	pIdCEP := productIdCEP{}
 	err = json.Unmarshal(body, &pIdCEP)
-	if err != nil {
-		log.Printf("Error unmarshalling body: %v", err)
-		http.Error(w, "can't read body", http.StatusBadRequest)
+	if checkError(err) {
+		http.Error(w, "Error unmarshalling body: %v", http.StatusInternalServerError)
 		return
 	}
 	// log.Printf("pack: %+v", pIdCEP)
 
 	// Get product information from zunkasite.
 	start := time.Now()
-	res, err := http.Get(`https://www.zunka.com.br/product-info/` + pIdCEP.ProductId)
+	client := &http.Client{}
+	req, err = http.NewRequest("GET", zunkaSiteHost()+"/setup/product-info/"+pIdCEP.ProductId, nil)
+	req.Header.Set("Content-Type", "application/json")
 	if checkError(err) {
-		http.Error(w, "can't get product information", http.StatusBadRequest)
+		http.Error(w, "Creating request to zunkasite", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("[debug] zunkasite response time: %.1fs", time.Since(start).Seconds())
-	// Read response.
-	resBody, err := ioutil.ReadAll(res.Body)
+	req.SetBasicAuth(zunkaSiteUser(), zunkaSitePass())
+	res, err := client.Do(req)
+	if checkError(err) {
+		http.Error(w, "Requesting product information to zunkasite.", http.StatusInternalServerError)
+		return
+	}
 	defer res.Body.Close()
+	// Result.
+	resBody, err := ioutil.ReadAll(res.Body)
 	if checkError(err) {
-		http.Error(w, "can't read body from zunka", http.StatusBadRequest)
+		http.Error(w, "Reading body from zunkasite response.", http.StatusInternalServerError)
 		return
 	}
-	// log.Printf("address: %s", resBody)
-	zProduct := zunkaProduct{}
-	err = json.Unmarshal(resBody, &zProduct)
-	if err != nil {
-		http.Error(w, "can't read body from zunka", http.StatusBadRequest)
-		return
+	log.Printf("[debug] Requesting product information from zunkasite, response time: %.3fs", time.Since(start).Seconds())
+	// log.Printf("resBody: %s", resBody)
+	// No 200 status.
+	if res.StatusCode != 200 {
+		err = errors.New(fmt.Sprintf("Error requesting product information from zunkasite.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody)))
+		if checkError(err) {
+			http.Error(w, "Error requesting product information from zunkasite.", http.StatusInternalServerError)
+			return
+		}
 	}
 
+	zProduct := zunkaProduct{}
+	err = json.Unmarshal(resBody, &zProduct)
+	if checkError(err) {
+		http.Error(w, "can't read body from zunka", http.StatusInternalServerError)
+		return
+	}
+	// log.Printf("zProduct: %v", zProduct)
+
 	deadlinePlus := 0
-	switch zProduct.Dealer {
+	switch strings.ToLower(zProduct.Dealer) {
 	case "aldo":
 		deadlinePlus = 4
 	}
 
 	p := pack{
 		CEPDestiny: pIdCEP.CEPDestiny,
-		// DestinyCEP: "31170210",
-		Weight: zProduct.Weight, // g.
-		Length: zProduct.Length, // cm.
-		Height: zProduct.Height, // cm.
-		Width:  zProduct.Width,  // cm.
+		Weight:     zProduct.Weight, // g.
+		Length:     zProduct.Length, // cm.
+		Height:     zProduct.Height, // cm.
+		Width:      zProduct.Width,  // cm.
+	}
+
+	// Invalid measurments.
+	if p.Weight == 0 {
+		http.Error(w, "Weight can't be 0", http.StatusBadRequest)
+		return
+	}
+	if p.Length == 0 {
+		http.Error(w, "Length can't be 0", http.StatusBadRequest)
+		return
+	}
+	if p.Height == 0 {
+		http.Error(w, "Height can't be 0", http.StatusBadRequest)
+		return
+	}
+	if p.Width == 0 {
+		http.Error(w, "Width can't be 0", http.StatusBadRequest)
+		return
 	}
 
 	// Correios

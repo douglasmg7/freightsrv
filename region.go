@@ -19,6 +19,12 @@ func getFreightRegionByCEPAndWeight(c chan *freightsOk, cep string, weight int) 
 		Freights: []*freight{},
 	}
 
+	// Inválid weight.
+	if weight == 0 {
+		c <- result
+		return
+	}
+
 	region, err := getRegionByCEP(cep)
 	if checkError(err) {
 		c <- result
@@ -46,6 +52,11 @@ func getFreightRegionByCEPAndWeight(c chan *freightsOk, cep string, weight int) 
 
 // Get region freight by region.
 func getFreightRegionByRegionAndWeight(region string, weight int) (frs []regionFreight, ok bool) {
+	// Inváid weight.
+	if weight == 0 {
+		return frs, false
+	}
+	// Select weight.
 	var weightSel int
 	// Get min weight freight for current weight.
 	// log.Printf("SELECT MIN(weight) FROM freight_region WHERE region=%s AND weight>=%d ORDER BY deadline", region, weight)

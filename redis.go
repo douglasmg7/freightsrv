@@ -62,7 +62,7 @@ func getCEPRegion(cep string) string {
 // Set via cep address.
 func setViaCEPAddressCache(pCep *string, pAddressJson *string) {
 	key := "freightsrv-via-cep-address-" + strings.ReplaceAll(*pCep, "-", "")
-	_ = redisSet(key, string(*pAddressJson), time.Hour*2)
+	_ = redisSet(key, string(*pAddressJson), time.Hour*48)
 }
 
 // Get via cep address.
@@ -88,7 +88,7 @@ func setCorreiosCache(p *pack, frS []*freight) {
 	if checkError(err) {
 		return
 	}
-	_ = redisSet(makeCorreiosKey(p), string(frSJson), time.Hour*2)
+	_ = redisSet(makeCorreiosKey(p), string(frSJson), time.Hour*48)
 }
 
 // Get Correios estimate delivery.
