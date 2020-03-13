@@ -72,3 +72,34 @@ type zunkaProduct struct {
 	Height int    `json:"height"` // cm.
 	Weight int    `json:"weight"` // grams.
 }
+
+// Zoom freight request.
+type zoomFregihtRequest struct {
+	Zipcode string                   `json:"zipcode"` // Dealer.
+	Items   []zoomFregihtRequestItem `json:"items"`   // cm.
+}
+
+// Zoom freight request.
+type zoomFregihtRequestItem struct {
+	Quantity  int     `json:"amount"` // Quantity.
+	ProductId string  `json:"sku"`    // Product id.
+	Price     float64 `json:"price"`
+	Weight    float64 `json:"weight"` // Kg.
+	Height    float64 `json:"height"` // Meter.
+	Width     float64 `json:"width"`  // Meter.
+	Length    float64 `json:"length"` // Meter.
+}
+
+// Zoom freight response.
+type zoomFregihtResponse struct {
+	ProductId string                `json:"id"`        // Dealer.
+	Estimates []zoomFregihtEstimate `json:"estimates"` // cm.
+}
+
+// Zoom freight request.
+type zoomFregihtEstimate struct {
+	Price       int    `json:"shippingPrice"`
+	Deadline    string `json:"daysToDelivery"`
+	CarrierCode string `json:"methodId"`
+	CarrierName string `json:"methodName"`
+}

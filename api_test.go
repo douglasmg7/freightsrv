@@ -263,6 +263,63 @@ func Test_FreightZunkaBHLocalStockAPI(t *testing.T) {
 
 // Freight deadline and price by product.
 func TestProductFreightZoomAPI(t *testing.T) {
+	fRequest := zoomFregihtRequest{
+		Zipcode: "31170210",
+		Items:   []zoomFregihtRequestItem{},
+	}
+	fRequest.Items = append(fRequest.Items, zoomFregihtRequestItem{
+		Sku:    "5e60eed63d13910785412eba",
+		Amount: 1,
+		Price:  34.4,
+		Weight: 2,
+		Height: .3,
+		Width:  .2,
+		Length: .4,
+	})
+
+	reqBody, err := json.Marshal(fRequest)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zoom"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Status: %d. body: %s", res.Code, res.Body.String())
+		return
+	}
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	fResponse := zoomFregihtResponse{}
+	json.Unmarshal(res.Body.Bytes(), &fResponse)
+	// log.Printf("fResponse: %+v", fResponse)
+
+	// if len(frInfoBasicS) == 0 {
+	// t.Errorf("No freight info.")
+	// return
+	// }
+	// if frInfoBasicS[0].Deadline == 0 {
+	// t.Errorf("No valid deadline.")
+	// return
+	// }
+	// if frInfoBasicS[0].Price == 0 {
+	// t.Errorf("No valid price.")
+	// return
+	// }
+	// got := res.Body.String()
+}
+
+// Freight deadline and price by product.
+func TestProductFreightZoomAPI_old(t *testing.T) {
+	t.SkipNow()
 	p := productIdCEP{
 		// CEPDestiny: "5-76-25-000",
 		CEPDestiny: "31170210",
