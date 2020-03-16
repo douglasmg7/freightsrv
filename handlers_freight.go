@@ -112,6 +112,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		return
 	}
 	// log.Printf("body: %s", string(body))
+	log.Printf("[debug] zoom freight request: %s", body)
 	fRequest := zoomFregihtRequest{}
 	err = json.Unmarshal(body, &fRequest)
 	if checkError(err) {
@@ -120,7 +121,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	}
 	// Get products information.
 	prodIds := struct {
-		Ids []string `json:"productIds"`
+		Ids []string `json:"productsId"`
 	}{}
 	for _, item := range fRequest.Items {
 		prodIds.Ids = append(prodIds.Ids, item.ProductId)
@@ -131,7 +132,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		http.Error(w, "Error marshalling products ids.", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("reqBody: %s", reqBody)
+	// log.Printf("reqBody: %s", reqBody)
 	start := time.Now()
 	client := &http.Client{}
 	req, err = http.NewRequest("GET", zunkaSiteHost()+"/setup/product-info", bytes.NewBuffer(reqBody))
@@ -171,7 +172,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		http.Error(w, "can't read body from zunka.", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("zProducts: %v", zProducts)
+	// log.Printf("zProducts: %v", zProducts)
 
 	// Create pack.
 	p, ok := createPack(zProducts, fRequest.Zipcode)
@@ -179,6 +180,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		http.Error(w, "Invalid product dimensions.", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("[debug] Pack: %v\n", p)
 
 	// Correios
 	cCorreios := make(chan *freightsOk)
@@ -190,36 +192,42 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 
 	frsOkCorreios, frsOkRegion := <-cCorreios, <-cRegion
 
-	frInfoBasicS := []freightInfoBasic{}
+	zoomFrEst := []zoomFregihtEstimate{}
 	// Correios result.
 	if frsOkCorreios.Ok {
 		for _, pfr := range frsOkCorreios.Freights {
-			frInfoBasicS = append(frInfoBasicS, freightInfoBasic{
-				Deadline: pfr.Deadline + p.ShipmentDelay,
-				Price:    pfr.Price,
+			zoomFrEst = append(zoomFrEst, zoomFregihtEstimate{
+				Deadline:    pfr.Deadline + p.ShipmentDelay,
+				Price:       pfr.Price,
+				CarrierName: pfr.Carrier,
+				CarrierCode: pfr.ServiceDesc,
 			})
 			// log.Printf("Correio freight: %+v", *pfr)
 		}
 	}
 
 	// Region result, if no Correios result.
-	if len(frInfoBasicS) == 0 && frsOkRegion.Ok {
+	if len(zoomFrEst) == 0 && frsOkRegion.Ok {
 		for _, pfr := range frsOkRegion.Freights {
-			frInfoBasicS = append(frInfoBasicS, freightInfoBasic{
-				Deadline: pfr.Deadline + p.ShipmentDelay,
-				Price:    pfr.Price,
+			zoomFrEst = append(zoomFrEst, zoomFregihtEstimate{
+				Deadline:    pfr.Deadline + p.ShipmentDelay,
+				Price:       pfr.Price,
+				CarrierName: pfr.Carrier,
+				CarrierCode: pfr.ServiceDesc,
 			})
 			// log.Printf("Region freight: %+v", *pfr)
 		}
 	}
 
-	frInfoBasicSJson, err := json.Marshal(frInfoBasicS)
+	// log.Printf("zoomFrEst: %v", zoomFrEst)
+	zoomFrEstJSON, err := json.Marshal(zoomFrEst)
 	if err != nil {
 		HandleError(w, err)
 		return
 	}
+	log.Printf("[debug] zoom freight response: %v", string(zoomFrEstJSON))
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(frInfoBasicSJson)
+	w.Write(zoomFrEstJSON)
 }
 
 // Create pack.
@@ -227,7 +235,7 @@ func createPack(products []zunkaProduct, CEPDestiny string) (p pack, ok bool) {
 	if len(products) == 0 {
 		return
 	}
-	p.CEPOrigin = CEPDestiny
+	p.CEPDestiny = CEPDestiny
 	// Products loop.
 	for _, product := range products {
 		// Invalid measurments.
@@ -238,23 +246,23 @@ func createPack(products []zunkaProduct, CEPDestiny string) (p pack, ok bool) {
 		// Check delay.
 		switch strings.ToLower(product.Dealer) {
 		case "aldo":
-			if p.ShipmentDelay < 4 {
-				p.ShipmentDelay = 4
+			if p.ShipmentDelay < 3 {
+				p.ShipmentDelay = 3
 			}
 		}
 		// Sort dimensions as lenght > width > height.
 		dim := []int{product.Length, product.Width, product.Height}
 		sort.Ints(dim)
 		// Length.
-		if dim[0] > p.Length {
-			p.Length = dim[0]
+		if dim[2] > p.Length {
+			p.Length = dim[2]
 		}
 		// Width.
 		if dim[1] > p.Width {
 			p.Width = dim[1]
 		}
 		// Height.
-		dim[2] += p.Height
+		p.Height += dim[0]
 		p.Weight += product.Weight
 	}
 	return p, true

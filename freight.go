@@ -18,11 +18,6 @@ type freightInfo struct {
 	Deadline    int     `json:"deadline"` // Days.
 }
 
-type freightInfoBasic struct {
-	Price    float64 `json:"price"`
-	Deadline int     `json:"deadline"` // Days.
-}
-
 type freightsOk struct {
 	Freights []*freight
 	Ok       bool
@@ -54,14 +49,15 @@ type pack struct {
 	ShipmentDelay int    `json:"-"`      // Some product not in store yet.
 	CEPOrigin     string `json:"cepOrigin"`
 	CEPDestiny    string `json:"cepDestiny"`
-	Weight        int    `json:"weight"` // g.
 	Length        int    `json:"length"` // cm.
-	Height        int    `json:"height"` // cm.
 	Width         int    `json:"width"`  // cm.
+	Height        int    `json:"height"` // cm.
+	Weight        int    `json:"weight"` // g.
 }
 
 // Zunka product.
 type zunkaProduct struct {
+	ID     string `json:"id"`
 	Dealer string `json:"dealer"` // Dealer.
 	Length int    `json:"length"` // cm.
 	Width  int    `json:"width"`  // cm.
@@ -88,7 +84,7 @@ type zoomFregihtRequestItem struct {
 
 // Zoom freight response.
 type zoomFregihtResponse struct {
-	ProductId string                `json:"id"`        // Dealer.
+	ID        string                `json:"id"`        // Dealer.
 	Estimates []zoomFregihtEstimate `json:"estimates"` // cm.
 }
 
@@ -96,6 +92,6 @@ type zoomFregihtResponse struct {
 type zoomFregihtEstimate struct {
 	Price       float64 `json:"shippingPrice"`
 	Deadline    int     `json:"daysToDelivery"`
-	CarrierCode string  `json:"methodId"`
 	CarrierName string  `json:"methodName"`
+	CarrierCode string  `json:"methodId"`
 }

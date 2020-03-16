@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -213,7 +212,7 @@ func TestProductFreightZoomAPI(t *testing.T) {
 	})
 	// Second product.
 	fRequest.Items = append(fRequest.Items, zoomFregihtRequestItem{
-		ProductId: "5e60eed63d13910785412eba",
+		ProductId: "5bcb336a4253f81781faca09",
 		Quantity:  2,
 		Price:     34.4,
 		Weight:    2,
@@ -243,9 +242,12 @@ func TestProductFreightZoomAPI(t *testing.T) {
 	}
 	// log.Printf("res.Body: %s", res.Body.String())
 
-	fResponse := zoomFregihtResponse{}
-	json.Unmarshal(res.Body.Bytes(), &fResponse)
-	log.Printf("fResponse: %+v", fResponse)
+	fResponse := zoomFregihtResponse{
+		// No sense, because just the first product.
+		ID: fRequest.Items[0].ProductId,
+	}
+	json.Unmarshal(res.Body.Bytes(), &fResponse.Estimates)
+	// log.Printf("fResponse: %+v", fResponse)
 
 	// Some estimate.
 	if len(fResponse.Estimates) == 0 {
