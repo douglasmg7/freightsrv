@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -31,10 +33,10 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 
 	var deadlinePlus int
 	var includeMotoboy bool
-	switch p.Dealer {
+	switch strings.ToLower(p.Dealer) {
 	case "aldo":
-		includeMotoboy = false
-		deadlinePlus = 4
+		includeMotoboy = true
+		deadlinePlus = 3
 	default:
 		includeMotoboy = true
 		deadlinePlus = 0
@@ -103,25 +105,36 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 
 // Freight for Zoom.
 func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	// Get product id and CEP.
+	// Get products ids and CEP.
 	body, err := ioutil.ReadAll(req.Body)
 	if checkError(err) {
 		http.Error(w, "can't read body", http.StatusInternalServerError)
 		return
 	}
 	// log.Printf("body: %s", string(body))
-	pIdCEP := productIdCEP{}
-	err = json.Unmarshal(body, &pIdCEP)
+	fRequest := zoomFregihtRequest{}
+	err = json.Unmarshal(body, &fRequest)
 	if checkError(err) {
-		http.Error(w, "Error unmarshalling body: %v", http.StatusInternalServerError)
+		http.Error(w, "Error unmarshalling body", http.StatusInternalServerError)
 		return
 	}
-	// log.Printf("pack: %+v", pIdCEP)
-
-	// Get product information from zunkasite.
+	// Get products information.
+	prodIds := struct {
+		Ids []string `json:"productIds"`
+	}{}
+	for _, item := range fRequest.Items {
+		prodIds.Ids = append(prodIds.Ids, item.ProductId)
+	}
+	// Products ids request.
+	reqBody, err := json.Marshal(prodIds)
+	if checkError(err) {
+		http.Error(w, "Error marshalling products ids.", http.StatusInternalServerError)
+		return
+	}
+	log.Printf("reqBody: %s", reqBody)
 	start := time.Now()
 	client := &http.Client{}
-	req, err = http.NewRequest("GET", zunkaSiteHost()+"/setup/product-info/"+pIdCEP.ProductId, nil)
+	req, err = http.NewRequest("GET", zunkaSiteHost()+"/setup/product-info", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	if checkError(err) {
 		http.Error(w, "Creating request to zunkasite", http.StatusInternalServerError)
@@ -130,7 +143,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	req.SetBasicAuth(zunkaSiteUser(), zunkaSitePass())
 	res, err := client.Do(req)
 	if checkError(err) {
-		http.Error(w, "Requesting product information to zunkasite.", http.StatusInternalServerError)
+		http.Error(w, "Requesting products information to zunkasite.", http.StatusInternalServerError)
 		return
 	}
 	defer res.Body.Close()
@@ -151,43 +164,19 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		}
 	}
 
-	zProduct := zunkaProduct{}
-	err = json.Unmarshal(resBody, &zProduct)
+	// Products informartions returned by zoom site.
+	zProducts := []zunkaProduct{}
+	err = json.Unmarshal(resBody, &zProducts)
 	if checkError(err) {
-		http.Error(w, "can't read body from zunka", http.StatusInternalServerError)
+		http.Error(w, "can't read body from zunka.", http.StatusInternalServerError)
 		return
 	}
-	// log.Printf("zProduct: %v", zProduct)
+	log.Printf("zProducts: %v", zProducts)
 
-	deadlinePlus := 0
-	switch strings.ToLower(zProduct.Dealer) {
-	case "aldo":
-		deadlinePlus = 4
-	}
-
-	p := pack{
-		CEPDestiny: pIdCEP.CEPDestiny,
-		Weight:     zProduct.Weight, // g.
-		Length:     zProduct.Length, // cm.
-		Height:     zProduct.Height, // cm.
-		Width:      zProduct.Width,  // cm.
-	}
-
-	// Invalid measurments.
-	if p.Weight == 0 {
-		http.Error(w, "Weight can't be 0", http.StatusBadRequest)
-		return
-	}
-	if p.Length == 0 {
-		http.Error(w, "Length can't be 0", http.StatusBadRequest)
-		return
-	}
-	if p.Height == 0 {
-		http.Error(w, "Height can't be 0", http.StatusBadRequest)
-		return
-	}
-	if p.Width == 0 {
-		http.Error(w, "Width can't be 0", http.StatusBadRequest)
+	// Create pack.
+	p, ok := createPack(zProducts, fRequest.Zipcode)
+	if !ok {
+		http.Error(w, "Invalid product dimensions.", http.StatusInternalServerError)
 		return
 	}
 
@@ -206,7 +195,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	if frsOkCorreios.Ok {
 		for _, pfr := range frsOkCorreios.Freights {
 			frInfoBasicS = append(frInfoBasicS, freightInfoBasic{
-				Deadline: pfr.Deadline + deadlinePlus,
+				Deadline: pfr.Deadline + p.ShipmentDelay,
 				Price:    pfr.Price,
 			})
 			// log.Printf("Correio freight: %+v", *pfr)
@@ -217,7 +206,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	if len(frInfoBasicS) == 0 && frsOkRegion.Ok {
 		for _, pfr := range frsOkRegion.Freights {
 			frInfoBasicS = append(frInfoBasicS, freightInfoBasic{
-				Deadline: pfr.Deadline + deadlinePlus,
+				Deadline: pfr.Deadline + p.ShipmentDelay,
 				Price:    pfr.Price,
 			})
 			// log.Printf("Region freight: %+v", *pfr)
@@ -231,6 +220,44 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(frInfoBasicSJson)
+}
+
+// Create pack.
+func createPack(products []zunkaProduct, CEPDestiny string) (p pack, ok bool) {
+	if len(products) == 0 {
+		return
+	}
+	p.CEPOrigin = CEPDestiny
+	// Products loop.
+	for _, product := range products {
+		// Invalid measurments.
+		if product.Length == 0 || product.Width == 0 || product.Height == 0 || product.Weight == 0 {
+			checkError(fmt.Errorf("Invalid product dimensions: %v", product))
+			return
+		}
+		// Check delay.
+		switch strings.ToLower(product.Dealer) {
+		case "aldo":
+			if p.ShipmentDelay < 4 {
+				p.ShipmentDelay = 4
+			}
+		}
+		// Sort dimensions as lenght > width > height.
+		dim := []int{product.Length, product.Width, product.Height}
+		sort.Ints(dim)
+		// Length.
+		if dim[0] > p.Length {
+			p.Length = dim[0]
+		}
+		// Width.
+		if dim[1] > p.Width {
+			p.Width = dim[1]
+		}
+		// Height.
+		dim[2] += p.Height
+		p.Weight += product.Weight
+	}
+	return p, true
 }
 
 // // Freight deadline and price.

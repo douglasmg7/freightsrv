@@ -50,18 +50,14 @@ type motoboyFreight struct {
 }
 
 type pack struct {
-	Dealer     string `json:"dealer"` // Aldo, Allnations, etc...
-	CEPOrigin  string `json:"cepOrigin"`
-	CEPDestiny string `json:"cepDestiny"`
-	Weight     int    `json:"weight"` // g.
-	Length     int    `json:"length"` // cm.
-	Height     int    `json:"height"` // cm.
-	Width      int    `json:"width"`  // cm.
-}
-
-type productIdCEP struct {
-	ProductId  string `json:"productId"`
-	CEPDestiny string `json:"cepDestiny"`
+	Dealer        string `json:"dealer"` // Aldo, Allnations, etc...
+	ShipmentDelay int    `json:"-"`      // Some product not in store yet.
+	CEPOrigin     string `json:"cepOrigin"`
+	CEPDestiny    string `json:"cepDestiny"`
+	Weight        int    `json:"weight"` // g.
+	Length        int    `json:"length"` // cm.
+	Height        int    `json:"height"` // cm.
+	Width         int    `json:"width"`  // cm.
 }
 
 // Zunka product.
@@ -98,8 +94,8 @@ type zoomFregihtResponse struct {
 
 // Zoom freight request.
 type zoomFregihtEstimate struct {
-	Price       int    `json:"shippingPrice"`
-	Deadline    string `json:"daysToDelivery"`
-	CarrierCode string `json:"methodId"`
-	CarrierName string `json:"methodName"`
+	Price       float64 `json:"shippingPrice"`
+	Deadline    int     `json:"daysToDelivery"`
+	CarrierCode string  `json:"methodId"`
+	CarrierName string  `json:"methodName"`
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -129,75 +130,8 @@ func TestGetAddressByCEPAPI(t *testing.T) {
 /******************************************************************************
 * Freights
 *******************************************************************************/
-// Zunka freight no local stock, equipment from Aldo.
-func Test_FreightZunkaNoLocalStockAldoProductAPI(t *testing.T) {
-	p := pack{
-		Dealer: "aldo",
-		// CEPDestiny: "5-76-25-000",
-		CEPDestiny: "31170210",
-		Weight:     1500, // g.
-		Length:     20,   // cm.
-		Height:     30,   // cm.
-		Width:      40,   // cm.
-	}
-	err := p.Validate()
-	if err != nil {
-		t.Errorf("Invalid pack. %v", err)
-	}
-
-	reqBody, err := json.Marshal(p)
-	if err != nil {
-		t.Error(err)
-	}
-	// log.Println("request body: " + string(reqBody))
-
-	url := "/freightsrv/freights/zunka"
-	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
-
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-	// log.Printf("res.Body: %s", res.Body.String())
-
-	frInfoS := []freightInfo{}
-	json.Unmarshal(res.Body.Bytes(), &frInfoS)
-	// log.Printf("frInfoS: %+v", frInfoS)
-
-	got := res.Body.String()
-	haveMotoboy := false
-	haveCorreiosOrTransporter := true
-
-	for _, frInfo := range frInfoS {
-		if frInfo.Carrier == "Correios" || frInfo.Carrier == "Transportadora" {
-			haveCorreiosOrTransporter = true
-		}
-		if frInfo.Carrier == "Correios" {
-			if frInfo.ServiceCode == "" {
-				t.Errorf("Correios service code empty")
-				return
-			}
-			if frInfo.ServiceDesc == "" {
-				t.Errorf("Correios service description empty")
-				return
-			}
-		}
-		if frInfo.Carrier == "Motoboy" {
-			haveMotoboy = true
-		}
-	}
-	if !haveCorreiosOrTransporter {
-		t.Errorf("got:  %q, no Correios neither Transportadora carrier", got)
-	}
-	if haveMotoboy {
-		t.Errorf("Can have Motoboy carrier, got:  %q", got)
-	}
-}
-
 // Zunka freight local stock to BH.
-func Test_FreightZunkaBHLocalStockAPI(t *testing.T) {
+func Test_FreightZunkaAPI(t *testing.T) {
 	p := pack{
 		CEPDestiny: "31170210",
 		Weight:     1500, // g.
@@ -267,14 +201,25 @@ func TestProductFreightZoomAPI(t *testing.T) {
 		Zipcode: "31170210",
 		Items:   []zoomFregihtRequestItem{},
 	}
+	// First product.
 	fRequest.Items = append(fRequest.Items, zoomFregihtRequestItem{
-		Sku:    "5e60eed63d13910785412eba",
-		Amount: 1,
-		Price:  34.4,
-		Weight: 2,
-		Height: .3,
-		Width:  .2,
-		Length: .4,
+		ProductId: "5e60eed63d13910785412eba",
+		Quantity:  1,
+		Price:     34.4,
+		Weight:    2,
+		Height:    .3,
+		Width:     .2,
+		Length:    .4,
+	})
+	// Second product.
+	fRequest.Items = append(fRequest.Items, zoomFregihtRequestItem{
+		ProductId: "5e60eed63d13910785412eba",
+		Quantity:  2,
+		Price:     34.4,
+		Weight:    2,
+		Height:    .3,
+		Width:     .2,
+		Length:    .4,
 	})
 
 	reqBody, err := json.Marshal(fRequest)
@@ -300,71 +245,33 @@ func TestProductFreightZoomAPI(t *testing.T) {
 
 	fResponse := zoomFregihtResponse{}
 	json.Unmarshal(res.Body.Bytes(), &fResponse)
-	// log.Printf("fResponse: %+v", fResponse)
+	log.Printf("fResponse: %+v", fResponse)
 
-	// if len(frInfoBasicS) == 0 {
-	// t.Errorf("No freight info.")
-	// return
-	// }
-	// if frInfoBasicS[0].Deadline == 0 {
-	// t.Errorf("No valid deadline.")
-	// return
-	// }
-	// if frInfoBasicS[0].Price == 0 {
-	// t.Errorf("No valid price.")
-	// return
-	// }
-	// got := res.Body.String()
-}
-
-// Freight deadline and price by product.
-func TestProductFreightZoomAPI_old(t *testing.T) {
-	t.SkipNow()
-	p := productIdCEP{
-		// CEPDestiny: "5-76-25-000",
-		CEPDestiny: "31170210",
-		// ProductId:  "5c19eab2fbed5f0a1c19dcc8",
-		ProductId: "5e60eed63d13910785412eba", // Aldo product.
-	}
-
-	reqBody, err := json.Marshal(p)
-	if err != nil {
-		t.Error(err)
-	}
-	// log.Println("request body: " + string(reqBody))
-
-	url := "/freightsrv/freights/zoom"
-	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
-
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-	if res.Code != 200 {
-		t.Errorf("Status: %d. body: %s", res.Code, res.Body.String())
-		return
-	}
-	// log.Printf("res.Body: %s", res.Body.String())
-
-	frInfoBasicS := []freightInfoBasic{}
-	json.Unmarshal(res.Body.Bytes(), &frInfoBasicS)
-	// log.Printf("frInfoBasicS: %+v", frInfoBasicS)
-
-	if len(frInfoBasicS) == 0 {
+	// Some estimate.
+	if len(fResponse.Estimates) == 0 {
 		t.Errorf("No freight info.")
 		return
 	}
-	if frInfoBasicS[0].Deadline == 0 {
+	// Price
+	if fResponse.Estimates[0].Price == 0 {
+		t.Errorf("No valid Price.")
+		return
+	}
+	// Deadline.
+	if fResponse.Estimates[0].Deadline == 0 {
 		t.Errorf("No valid deadline.")
 		return
 	}
-	if frInfoBasicS[0].Price == 0 {
-		t.Errorf("No valid price.")
+	// Carrier name.
+	if fResponse.Estimates[0].CarrierName == "" {
+		t.Errorf("No valid carrier name.")
 		return
 	}
-	// got := res.Body.String()
+	// Carrier code.
+	if fResponse.Estimates[0].CarrierCode == "" {
+		t.Errorf("No valid carrier code.")
+		return
+	}
 }
 
 // Freight deadline and price.
