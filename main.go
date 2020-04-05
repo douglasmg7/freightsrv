@@ -99,7 +99,8 @@ func init() {
 	log.SetOutput(mw)
 	// log.SetFlags(log.LstdFlags)
 	// log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetFlags(log.Ldate | log.Lmicroseconds)
+	log.SetPrefix("[freightsrv] ")
+	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lmsgprefix)
 
 	// Sqlite3 DB.
 	zunkaFreightDB := os.Getenv("ZUNKA_FREIGHT_DB")
