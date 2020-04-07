@@ -121,6 +121,7 @@ func TestGetCorreiosFreightByPack(t *testing.T) {
 		Length:     20,   // cm.
 		Height:     30,   // cm.
 		Width:      40,   // cm.
+		Price:      2190.49,
 	}
 
 	c := make(chan *freightsOk)

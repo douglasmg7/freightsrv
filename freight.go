@@ -45,24 +45,26 @@ type motoboyFreight struct {
 }
 
 type pack struct {
-	Dealer        string `json:"dealer"` // Aldo, Allnations, etc...
-	ShipmentDelay int    `json:"-"`      // Some product not in store yet.
-	CEPOrigin     string `json:"cepOrigin"`
-	CEPDestiny    string `json:"cepDestiny"`
-	Length        int    `json:"length"` // cm.
-	Width         int    `json:"width"`  // cm.
-	Height        int    `json:"height"` // cm.
-	Weight        int    `json:"weight"` // g.
+	Dealer        string  `json:"dealer"` // Aldo, Allnations, etc...
+	ShipmentDelay int     `json:"-"`      // Some product not in store yet.
+	CEPOrigin     string  `json:"cepOrigin"`
+	CEPDestiny    string  `json:"cepDestiny"`
+	Length        int     `json:"length"` // cm.
+	Width         int     `json:"width"`  // cm.
+	Height        int     `json:"height"` // cm.
+	Weight        int     `json:"weight"` // g.
+	Price         float64 `json:"price"`  // R$.
 }
 
 // Zunka product.
 type zunkaProduct struct {
-	ID     string `json:"id"`
-	Dealer string `json:"dealer"` // Dealer.
-	Length int    `json:"length"` // cm.
-	Width  int    `json:"width"`  // cm.
-	Height int    `json:"height"` // cm.
-	Weight int    `json:"weight"` // grams.
+	ID     string  `json:"id"`
+	Dealer string  `json:"dealer"` // Dealer.
+	Length int     `json:"length"` // cm.
+	Width  int     `json:"width"`  // cm.
+	Height int     `json:"height"` // cm.
+	Weight int     `json:"weight"` // grams.
+	Price  float64 `json:"price"`  // R$.
 }
 
 // Zoom freight request.

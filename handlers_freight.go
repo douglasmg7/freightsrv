@@ -29,7 +29,7 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 		http.Error(w, "Error unmarshalling body: %v", http.StatusInternalServerError)
 		return
 	}
-	// log.Printf("pack: %+v", p)
+	// log.Printf("[debug] Pack zunka handler: %+v", p)
 
 	var deadlinePlus int
 	var includeMotoboy bool
@@ -112,7 +112,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		return
 	}
 	// log.Printf("body: %s", string(body))
-	log.Printf("[debug] zoom freight request: %s", body)
+	// log.Printf("[debug] zoom freight request: %s", body)
 	fRequest := zoomFregihtRequest{}
 	err = json.Unmarshal(body, &fRequest)
 	if checkError(err) {
@@ -180,7 +180,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		http.Error(w, "Invalid product dimensions.", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("[debug] Pack: %v\n", p)
+	// log.Printf("[debug] Pack zoom handler: %+v\n", p)
 
 	// Correios
 	cCorreios := make(chan *freightsOk)
@@ -239,10 +239,17 @@ func createPack(products []zunkaProduct, CEPDestiny string) (p pack, ok bool) {
 	// Products loop.
 	for _, product := range products {
 		// Invalid measurments.
-		if product.Length == 0 || product.Width == 0 || product.Height == 0 || product.Weight == 0 {
+		if product.Length == 0 || product.Width == 0 || product.Height == 0 || product.Weight == 0 || product.Price == 0 {
 			checkError(fmt.Errorf("Invalid product dimensions: %v", product))
 			return
 		}
+		// Invalid price.
+		if product.Price < 1.0 || product.Price > 1000000.0 {
+			checkError(fmt.Errorf("Invalid product price: %v", product))
+			return
+		}
+		// Price.
+		p.Price += product.Price
 		// Check delay.
 		switch strings.ToLower(product.Dealer) {
 		case "aldo":
@@ -267,81 +274,3 @@ func createPack(products []zunkaProduct, CEPDestiny string) (p pack, ok bool) {
 	}
 	return p, true
 }
-
-// // Freight deadline and price.
-// func freightsHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params, includeMotoboy bool) {
-// body, err := ioutil.ReadAll(req.Body)
-// if err != nil {
-// log.Printf("Error reading body: %v", err)
-// http.Error(w, "can't read body", http.StatusBadRequest)
-// return
-// }
-// // log.Printf("body: %s", string(body))
-
-// p := pack{}
-// err = json.Unmarshal(body, &p)
-// if err != nil {
-// log.Printf("Error unmarshalling body: %v", err)
-// http.Error(w, "can't read body", http.StatusBadRequest)
-// return
-// }
-// // log.Printf("pack: %+v", p)
-
-// // Correios
-// cCorreios := make(chan *freightsOk)
-// go getCorreiosFreightByPack(cCorreios, &p)
-
-// // Motoboy.
-// cMotoboy := make(chan *freightsOk)
-// go getMotoboyFreightByCEP(cMotoboy, p.CEPDestiny)
-
-// // Region.
-// cRegion := make(chan *freightsOk)
-// go getFreightRegionByCEPAndWeight(cRegion, p.CEPDestiny, p.Weight)
-
-// frsOkMotoboy, frsOkCorreios, frsOkRegion := <-cMotoboy, <-cCorreios, <-cRegion
-
-// frInfoS := []freightInfo{}
-// // Correios result.
-// if frsOkCorreios.Ok {
-// for _, pfr := range frsOkCorreios.Freights {
-// frInfoS = append(frInfoS, freightInfo{
-// Carrier:  pfr.Carrier,
-// Deadline: pfr.Deadline,
-// Price:    pfr.Price,
-// })
-// // log.Printf("Correio freight: %+v", *pfr)
-// }
-// }
-
-// // Region result, if no Correios result.
-// if len(frInfoS) == 0 && frsOkRegion.Ok {
-// for _, pfr := range frsOkRegion.Freights {
-// frInfoS = append(frInfoS, freightInfo{
-// Carrier:  pfr.Carrier,
-// Deadline: pfr.Deadline,
-// Price:    pfr.Price,
-// })
-// // log.Printf("Region freight: %+v", *pfr)
-// }
-// }
-
-// // Motoboy result.
-// if frsOkMotoboy.Ok && includeMotoboy {
-// // Motoboy return only one freight.
-// frInfoS = append(frInfoS, freightInfo{
-// Carrier:  frsOkMotoboy.Freights[0].Carrier,
-// Deadline: frsOkMotoboy.Freights[0].Deadline,
-// Price:    frsOkMotoboy.Freights[0].Price,
-// })
-// // log.Printf("Motoboy freight: %+v", *frsOkMotoboy.Freights[0])
-// }
-
-// frInfoSJson, err := json.Marshal(frInfoS)
-// if err != nil {
-// HandleError(w, err)
-// return
-// }
-// w.Header().Set("Content-Type", "application/json")
-// w.Write(frInfoSJson)
-// }

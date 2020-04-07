@@ -14,13 +14,13 @@ import (
 )
 
 const (
-	CORREIOS_URL                    = `http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPrecoPrazo`
-	CORREIOS_SERVICES_CODE          = "4596, 4553" // 4596-PAC, 4553-SEDEX
-	CORREIOS_PACKAGE_FORMAT         = "1"          // 1 - caixa/pacote, 2 - rolo/prisma, 3 - Envelope.
-	CORREIOS_PACKAGE_DIAMETER       = "0"          // Diâmetro em cm.
-	CORREIOS_OWN_HAND               = "N"          // Se a encomenda será entregue com o serviço adicional mão própria.
-	CORREIOS_DECLARED_VALUE         = "0"          // Valor delcarado.
-	CORREIOS_ACKNOWLEDGMENT_RECEIPT = "N"          // Aviso de recebimento.
+	CORREIOS_URL              = `http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPrecoPrazo`
+	CORREIOS_SERVICES_CODE    = "4596, 4553" // 4596-PAC, 4553-SEDEX
+	CORREIOS_PACKAGE_FORMAT   = "1"          // 1 - caixa/pacote, 2 - rolo/prisma, 3 - Envelope.
+	CORREIOS_PACKAGE_DIAMETER = "0"          // Diâmetro em cm.
+	CORREIOS_OWN_HAND         = "N"          // Se a encomenda será entregue com o serviço adicional mão própria.
+	// CORREIOS_DECLARED_VALUE         = "0"          // Valor delcarado.
+	CORREIOS_ACKNOWLEDGMENT_RECEIPT = "N" // Aviso de recebimento.
 )
 
 func (p *pack) Validate() error {
@@ -82,6 +82,16 @@ func (p *pack) Validate() error {
 		return fmt.Errorf("Width must be less then %v cm", maxWidth)
 	}
 
+	// Price in R$.
+	minPrice := 1.0
+	maxPrice := 1000000.0
+	if p.Price < minPrice {
+		return fmt.Errorf("Price must be more then R$ %v", minPrice)
+	}
+	if p.Width > maxWidth {
+		return fmt.Errorf("Price must be less then R$ %v", maxPrice)
+	}
+
 	return nil
 }
 
@@ -108,7 +118,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 		Freights: []*freight{},
 	}
 	err = p.Validate()
-	if err != nil {
+	if checkError(err) {
 		c <- result
 		return
 	}
@@ -122,7 +132,6 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 		c <- result
 		return
 	}
-
 	// Not in the cache.
 	reqBody := []byte(`nCdEmpresa=` + CORREIOS_COMPANY_ADMIN_CODE +
 		`&sDsSenha=` + CORREIOS_COMPANY_PASSWORD +
@@ -136,11 +145,12 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 		`&nVlLargura=` + strconv.Itoa(p.Width) +
 		`&nVlDiametro=` + CORREIOS_PACKAGE_DIAMETER +
 		`&sCdMaoPropria=` + CORREIOS_OWN_HAND +
-		`&nVlValorDeclarado=` + CORREIOS_DECLARED_VALUE +
+		`&nVlValorDeclarado=` + fmt.Sprintf("%.2f", p.Price) +
+		// `&nVlValorDeclarado=` + "0" +
 		`&sCdAvisoRecebimento=` + CORREIOS_ACKNOWLEDGMENT_RECEIPT)
 
 	// Log request.
-	// log.Println("request body: " + string(reqBody))
+	log.Println("[debug] Correios request body: " + string(reqBody))
 
 	// Request product add.
 	client := &http.Client{}

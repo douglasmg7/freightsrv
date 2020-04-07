@@ -137,6 +137,7 @@ func Test_FreightZunkaAPI(t *testing.T) {
 		Length:     20,   // cm.
 		Height:     30,   // cm.
 		Width:      40,   // cm.
+		Price:      2512.22,
 	}
 	err := p.Validate()
 	if err != nil {
