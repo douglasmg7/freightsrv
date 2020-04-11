@@ -138,7 +138,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 		`&nCdServico=` + CORREIOS_SERVICES_CODE +
 		`&sCepOrigem=` + p.CEPOrigin +
 		`&sCepDestino=` + p.CEPDestiny +
-		`&nVlPeso=` + strconv.Itoa(p.Weight/1000) +
+		`&nVlPeso=` + fmt.Sprintf("%.3f", (float64(p.Weight)/1000)) + // Kg.
 		`&nCdFormato=` + CORREIOS_PACKAGE_FORMAT +
 		`&nVlComprimento=` + strconv.Itoa(p.Length) +
 		`&nVlAltura=` + strconv.Itoa(p.Height) +

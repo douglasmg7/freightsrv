@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -79,7 +80,7 @@ func getViaCEPAddressCache(pCep *string) (*string, bool) {
 //	CORREIOS FREIGHTS
 //****************************************************************************
 func makeCorreiosKey(p *pack) string {
-	return "freightsrv-correios-estimate-freight-" + strings.ReplaceAll(p.CEPOrigin, "-", "") + "-" + strings.ReplaceAll(p.CEPDestiny, "-", "") + "-" + strconv.Itoa(p.Weight) + "-" + strconv.Itoa(p.Length) + "-" + strconv.Itoa(p.Height) + "-" + strconv.Itoa(p.Width)
+	return "freightsrv-correios-estimate-freight-" + strings.ReplaceAll(p.CEPOrigin, "-", "") + "-" + strings.ReplaceAll(p.CEPDestiny, "-", "") + "-" + strconv.Itoa(p.Weight) + "-" + strconv.Itoa(p.Length) + "-" + strconv.Itoa(p.Height) + "-" + strconv.Itoa(p.Width) + "-" + fmt.Sprintf("%.3f", p.Price)
 }
 
 // Set Correios estimate delivery.

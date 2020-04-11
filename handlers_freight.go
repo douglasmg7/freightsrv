@@ -29,7 +29,7 @@ func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httproute
 		http.Error(w, "Error unmarshalling body: %v", http.StatusInternalServerError)
 		return
 	}
-	// log.Printf("[debug] Pack zunka handler: %+v", p)
+	log.Printf("[debug] Pack zunka handler: %+v", p)
 
 	var deadlinePlus int
 	var includeMotoboy bool
