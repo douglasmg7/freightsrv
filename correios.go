@@ -35,7 +35,7 @@ func (p *pack) ValidateCorreios() bool {
 		p.Length = minLength
 	}
 	if p.Length > maxLength {
-		log.Printf("[warning] [correios] Correios shipping will not be estimated. Length of %v cm greater than %v cm.", p.Length, maxLength)
+		log.Printf("[warning] [correios] Correios shipping not estimated. Length of %v cm greater than %v cm.", p.Length, maxLength)
 		return false
 	}
 
@@ -47,7 +47,7 @@ func (p *pack) ValidateCorreios() bool {
 		p.Width = minWidth
 	}
 	if p.Width > maxWidth {
-		log.Printf("[warning] [correios] Correios shipping will not be estimated. Width of %v cm greater than %v cm.", p.Width, maxWidth)
+		log.Printf("[warning] [correios] Correios shipping not estimated. Width of %v cm greater than %v cm.", p.Width, maxWidth)
 		return false
 	}
 
@@ -59,7 +59,7 @@ func (p *pack) ValidateCorreios() bool {
 		p.Height = minHeight
 	}
 	if p.Height > maxHeight {
-		log.Printf("[warning] [correios] Correios shipping will not be estimated. Height of %v cm greater than %v cm.", p.Height, maxHeight)
+		log.Printf("[warning] [correios] Correios shipping not estimated. Height of %v cm greater than %v cm.", p.Height, maxHeight)
 		return false
 	}
 
@@ -68,11 +68,11 @@ func (p *pack) ValidateCorreios() bool {
 	minSum := 26
 	maxSum := 200
 	if sum < minSum {
-		log.Printf("[warning] [correios] Correios shipping will not be estimated. Sum dimensions of %v cm less than %v cm.", sum, minSum)
+		log.Printf("[warning] [correios] Correios shipping not estimated. Sum dimensions of %v cm less than %v cm.", sum, minSum)
 		return false
 	}
 	if sum > maxSum {
-		log.Printf("[warning] [correios] Correios shipping will not be estimated. Sum dimensions of %v cm greater than %v cm.", sum, maxSum)
+		log.Printf("[warning] [correios] Correios shipping not estimated. Sum dimensions of %v cm greater than %v cm.", sum, maxSum)
 		return false
 	}
 
