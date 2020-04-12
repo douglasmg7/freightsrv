@@ -1,6 +1,11 @@
 package main
 
-import "time"
+import (
+	"log"
+	"regexp"
+	"strings"
+	"time"
+)
 
 type freight struct {
 	Carrier     string  `json:"carrier"`
@@ -54,6 +59,54 @@ type pack struct {
 	Height        int     `json:"height"` // cm.
 	Weight        int     `json:"weight"` // g.
 	Price         float64 `json:"price"`  // R$.
+}
+
+func (p *pack) Validate() bool {
+
+	regCep := regexp.MustCompile(`^[0-9]{8}$`)
+
+	// Origin CEP.
+	p.CEPOrigin = strings.ReplaceAll(p.CEPOrigin, "-", "")
+	if p.CEPOrigin == "" {
+		p.CEPOrigin = CEP_ORIGIN
+	}
+	if !regCep.MatchString(p.CEPOrigin) {
+		log.Printf("[warning] Invalid CEP origin: %v", p.CEPOrigin)
+		return false
+	}
+
+	// Destiny CEP.
+	p.CEPDestiny = strings.ReplaceAll(p.CEPDestiny, "-", "")
+	if !regCep.MatchString(p.CEPDestiny) {
+		log.Printf("[warning] Invalid CEP destiny: %v", p.CEPDestiny)
+		return false
+	}
+
+	// Weight in kg.
+	minWeight := 1
+	maxWeight := 50000
+	if p.Weight < minWeight {
+		log.Printf("[warning] Invalid weight of %v kg. Must be more than %v kg", p.Weight, minWeight)
+		return false
+	}
+	if p.Weight > maxWeight {
+		log.Printf("[warning] Invalid weight of %v kg. Must be less than %v kg", p.Weight, maxWeight)
+		return false
+	}
+
+	// Price in R$.
+	minPrice := 1.0
+	maxPrice := 1000000.0
+	if p.Price < minPrice {
+		log.Printf("[warning] Invalid price of R$ %v. Must be more than R$ %v", p.Price, minPrice)
+		return false
+	}
+	if p.Price > maxPrice {
+		log.Printf("[warning] Invalid price of R$ %v. Must be less than R$ %v", p.Price, maxPrice)
+		return false
+	}
+
+	return true
 }
 
 // Zunka product.

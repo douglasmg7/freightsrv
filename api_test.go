@@ -139,9 +139,8 @@ func Test_FreightZunkaAPI(t *testing.T) {
 		Width:      40,   // cm.
 		Price:      2512.22,
 	}
-	err := p.Validate()
-	if err != nil {
-		t.Errorf("Invalid pack. %v", err)
+	if !p.ValidateCorreios() {
+		t.Errorf("Not a valid pack to estimate correios shipping. Pack: %+v", p)
 	}
 
 	reqBody, err := json.Marshal(p)
@@ -288,9 +287,8 @@ func TestFreightZoomAPI(t *testing.T) {
 		Height: 30,   // cm.
 		Width:  40,   // cm.
 	}
-	err := p.Validate()
-	if err != nil {
-		t.Errorf("Invalid pack. %v", err)
+	if !p.ValidateCorreios() {
+		t.Errorf("Not a valid pack to estimate correios shipping. Pack: %+v", p)
 	}
 
 	reqBody, err := json.Marshal(p)

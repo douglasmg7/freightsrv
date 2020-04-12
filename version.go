@@ -1,8 +1,11 @@
 package main
 
 const (
-	version string = "1.2.1"
-	// Using weight with grams to estimate Correios freight.
+	version string = "1.2.2"
+	// Change dimensions pack if it less than required by Correios.
+
+	// version string = "1.2.1"
+	// // Using weight with grams to estimate Correios freight.
 
 	// version string = "1.2.0"
 	// // Using price to Correios request.
