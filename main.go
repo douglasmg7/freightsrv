@@ -113,28 +113,28 @@ func init() {
 	router = httprouter.New()
 
 	// Address.
-	router.GET("/freightsrv/address", checkAuthorization(addressHandler, []string{"zunka"}))
+	router.GET("/freightsrv/address", checkAuthorization(addressHandler, []string{"zunkasite"}))
 
 	// Freights.
-	router.GET("/freightsrv/", checkAuthorization(indexHandler, []string{"zunka", "zoom-buscape"}))
-	router.GET("/freightsrv/hello", checkAuthorization(indexHandler, []string{"zunka", "zoom-buscape"}))
+	router.GET("/freightsrv/", checkAuthorization(indexHandler, []string{"zunkasite", "zoombuscape"}))
+	router.GET("/freightsrv/hello", checkAuthorization(indexHandler, []string{"zunkasite", "zoombuscape"}))
 	// todo - remove user test from this point.
-	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunka"}))
-	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoom-buscape"}))
+	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandler, []string{"zunkasite"}))
+	router.GET("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoombuscape"}))
 
 	// Motoboy.
-	router.GET("/freightsrv/motoboy-freights", checkAuthorization(getAllMotoboyFreightHandler, []string{"zunka"}))
-	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(getMotoboyFreightHandler, []string{"zunka"}))
-	router.DELETE("/freightsrv/motoboy-freight/:id", checkAuthorization(deleteMotoboyFreightHandler, []string{"zunka"}))
-	router.PUT("/freightsrv/motoboy-freight", checkAuthorization(updateMotoboyFreightHandler, []string{"zunka"}))
-	router.POST("/freightsrv/motoboy-freight", checkAuthorization(createMotoboyFreightHandler, []string{"zunka"}))
+	router.GET("/freightsrv/motoboy-freights", checkAuthorization(getAllMotoboyFreightHandler, []string{"zunkasite"}))
+	router.GET("/freightsrv/motoboy-freight/:id", checkAuthorization(getMotoboyFreightHandler, []string{"zunkasite"}))
+	router.DELETE("/freightsrv/motoboy-freight/:id", checkAuthorization(deleteMotoboyFreightHandler, []string{"zunkasite"}))
+	router.PUT("/freightsrv/motoboy-freight", checkAuthorization(updateMotoboyFreightHandler, []string{"zunkasite"}))
+	router.POST("/freightsrv/motoboy-freight", checkAuthorization(createMotoboyFreightHandler, []string{"zunkasite"}))
 
 	// Region.
-	router.GET("/freightsrv/region-freights", checkAuthorization(getAllRegionFreightHandler, []string{"zunka"}))
-	router.GET("/freightsrv/region-freight/:id", checkAuthorization(getOneRegionFreightHandler, []string{"zunka"}))
-	router.DELETE("/freightsrv/region-freight/:id", checkAuthorization(deleteRegionFreightHandler, []string{"zunka"}))
-	router.PUT("/freightsrv/region-freight", checkAuthorization(updateRegionFreightHandler, []string{"zunka"}))
-	router.POST("/freightsrv/region-freight", checkAuthorization(createRegionFreightHandler, []string{"zunka"}))
+	router.GET("/freightsrv/region-freights", checkAuthorization(getAllRegionFreightHandler, []string{"zunkasite"}))
+	router.GET("/freightsrv/region-freight/:id", checkAuthorization(getOneRegionFreightHandler, []string{"zunkasite"}))
+	router.DELETE("/freightsrv/region-freight/:id", checkAuthorization(deleteRegionFreightHandler, []string{"zunkasite"}))
+	router.PUT("/freightsrv/region-freight", checkAuthorization(updateRegionFreightHandler, []string{"zunkasite"}))
+	router.POST("/freightsrv/region-freight", checkAuthorization(createRegionFreightHandler, []string{"zunkasite"}))
 }
 
 func initRedis() {

@@ -138,20 +138,20 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	req, err = http.NewRequest("GET", zunkaSiteHost()+"/setup/product-info", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	if checkError(err) {
-		http.Error(w, "Creating request to zunkasite", http.StatusInternalServerError)
+		http.Error(w, "Error creating request to zunkasite", http.StatusInternalServerError)
 		return
 	}
 	req.SetBasicAuth(zunkaSiteUser(), zunkaSitePass())
 	res, err := client.Do(req)
 	if checkError(err) {
-		http.Error(w, "Requesting products information to zunkasite.", http.StatusInternalServerError)
+		http.Error(w, "Error requesting products information to zunkasite.", http.StatusInternalServerError)
 		return
 	}
 	defer res.Body.Close()
 	// Result.
 	resBody, err := ioutil.ReadAll(res.Body)
 	if checkError(err) {
-		http.Error(w, "Reading body from zunkasite response.", http.StatusInternalServerError)
+		http.Error(w, "Error reading body from zunkasite response.", http.StatusInternalServerError)
 		return
 	}
 	log.Printf("[debug] Requesting product information from zunkasite, response time: %.3fs", time.Since(start).Seconds())
@@ -169,7 +169,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	zProducts := []zunkaProduct{}
 	err = json.Unmarshal(resBody, &zProducts)
 	if checkError(err) {
-		http.Error(w, "can't read body from zunka.", http.StatusInternalServerError)
+		http.Error(w, "Can't read body from zunka.", http.StatusInternalServerError)
 		return
 	}
 	// log.Printf("zProducts: %v", zProducts)

@@ -33,7 +33,7 @@ func Test_ValidUserAndPassAuth(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodGet, "/freightsrv/", nil)
 
 	// Correct password.
-	req.SetBasicAuth("test", "1234")
+	req.SetBasicAuth("bypass", "123456")
 	res := httptest.NewRecorder()
 
 	// indexHandler(res, req, nil)

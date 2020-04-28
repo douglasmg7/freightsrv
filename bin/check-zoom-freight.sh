@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-read -r HOST USER PASS <<< $(./auth.sh zoom)
+read -r HOST USER PASS <<< $(./auth.sh zoombuscape)
 
 # Run mode.
 if [[ $RUN_MODE == production ]];then
