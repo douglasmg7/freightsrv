@@ -8,6 +8,7 @@ curl -u $USER:$PASS -X GET $HOST/freightsrv/freights/zunka \
 		"Weight":     1500,
 		"Length":     20,
 		"Height":     30,
-		"Width":      40
+		"Width":      40,
+        "Price":      90.54
 	}'
 printf "\n"
