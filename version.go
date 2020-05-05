@@ -1,8 +1,11 @@
 package main
 
 const (
-	version string = "1.4.0"
-	// Using POST for zoom freight request.
+	version string = "1.4.1"
+	// Not auth to zoom freight request.
+
+	// version string = "1.4.0"
+	// // Using POST for zoom freight request.
 
 	// version string = "1.3.0"
 	// // Password removed from scripts.

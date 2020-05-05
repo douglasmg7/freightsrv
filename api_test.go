@@ -230,7 +230,7 @@ func TestProductFreightZoomAPI(t *testing.T) {
 	url := "/freightsrv/freights/zoom"
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
 
-	req.SetBasicAuth("bypass", "123456")
+	// req.SetBasicAuth("bypass", "123456")
 	req.Header.Set("Content-Type", "application/json")
 
 	res := httptest.NewRecorder()

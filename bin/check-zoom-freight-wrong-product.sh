@@ -43,7 +43,9 @@ EOF
     # -H "Content-Type: application/json" \
     # -d "$(generate_data)"
 
-CMD="curl -v -u $USER:$PASS $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
+# CMD="curl -v -u $USER:$PASS $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
+
+CMD="curl -v $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
 
 # printf "%s\n\n" "$CMD"
 echo $CMD

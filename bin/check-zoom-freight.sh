@@ -8,10 +8,10 @@ if [[ $RUN_MODE == production ]];then
     # SKU1=5bcb336a4253f81781faca09
     # SKU2=5bcb336a4253f81781faca09
 else
-    SKU1=5e8e04c3f534fd0ab23693ce
-    SKU2=5e838586245fc89929510b04
-    # SKU1=5e60eed63d13910785412eba
-    # SKU2=5bcb336a4253f81781faca09
+    # SKU1=5e8e04c3f534fd0ab23693ce
+    # SKU2=5e838586245fc89929510b04
+    SKU1=5e60eed63d13910785412eba
+    SKU2=5bcb336a4253f81781faca09
 fi
 
 generate_data()
@@ -47,7 +47,9 @@ EOF
     # -H "Content-Type: application/json" \
     # -d "$(generate_data)"
 
-CMD="curl -u $USER:$PASS $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
+# CMD="curl -u $USER:$PASS $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
+
+CMD="curl $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
 
 # printf "%s\n\n" "$CMD"
 echo $CMD

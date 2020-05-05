@@ -173,12 +173,17 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 
 	// Products informartions returned by zoom site.
 	zProducts := []zunkaProduct{}
+	// log.Printf("[debug] resBody: %v", resBody)
 	err = json.Unmarshal(resBody, &zProducts)
 	if checkError(err) {
 		http.Error(w, "Can't read body from zunka.", http.StatusInternalServerError)
 		return
 	}
-	// log.Printf("zProducts: %v", zProducts)
+	log.Printf("zProducts: %v", zProducts)
+	if len(zProducts) != len(prodIds.Ids) {
+		http.Error(w, "Some of product(s) was not found.", http.StatusBadRequest)
+		return
+	}
 
 	// Create pack.
 	p, ok := createPack(zProducts, fRequest.Zipcode)
