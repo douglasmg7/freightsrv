@@ -179,7 +179,7 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		http.Error(w, "Can't read body from zunka.", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("zProducts: %v", zProducts)
+	// log.Printf("zProducts: %v", zProducts)
 	if len(zProducts) != len(prodIds.Ids) {
 		http.Error(w, "Some of product(s) was not found.", http.StatusBadRequest)
 		return
