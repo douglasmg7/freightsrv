@@ -18,7 +18,7 @@ generate_data()
     "items": [
         { 
             "amount": 1,
-            "sku": "$SKU1",
+            "sku": "1I3eF1",
             "price": 34.4, 
             "weight": 2,
             "height": 0.3,
@@ -27,7 +27,7 @@ generate_data()
         },
         {
             "amount": 2,
-            "sku": "$SKU2",
+            "sku": "2R343",
             "price": 34.4, 
             "weight": 2,
             "height": 0.3,
@@ -43,7 +43,7 @@ EOF
     # -H "Content-Type: application/json" \
     # -d "$(generate_data)"
 
-CMD="curl -u $USER:$PASS $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
+CMD="curl -v -u $USER:$PASS $HOST/freightsrv/freights/zoom -H \"Content-Type: application/json\" -d '$(generate_data)'"
 
 # printf "%s\n\n" "$CMD"
 echo $CMD

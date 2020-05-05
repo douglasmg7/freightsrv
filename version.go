@@ -1,8 +1,11 @@
 package main
 
 const (
-	version string = "1.3.0"
-	// Password removed from scripts.
+	version string = "1.4.0"
+	// Using POST for zoom freight request.
+
+	// version string = "1.3.0"
+	// // Password removed from scripts.
 
 	// version string = "1.2.2"
 	// // Change dimensions pack if it less than required by Correios.

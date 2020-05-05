@@ -156,6 +156,12 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	}
 	log.Printf("[debug] Requesting product information from zunkasite, response time: %.3fs", time.Since(start).Seconds())
 	// log.Printf("resBody: %s", resBody)
+	// Bad request.
+	if res.StatusCode == 400 {
+		log.Printf("[warn] Requesting product information from zunkasite, status: %v, body: %v", res.StatusCode, string(resBody))
+		http.Error(w, string(resBody), http.StatusBadRequest)
+		return
+	}
 	// No 200 status.
 	if res.StatusCode != 200 {
 		err = errors.New(fmt.Sprintf("Error requesting product information from zunkasite.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody)))

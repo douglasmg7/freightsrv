@@ -228,7 +228,7 @@ func TestProductFreightZoomAPI(t *testing.T) {
 	// log.Println("request body: " + string(reqBody))
 
 	url := "/freightsrv/freights/zoom"
-	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
 
 	req.SetBasicAuth("bypass", "123456")
 	req.Header.Set("Content-Type", "application/json")
@@ -273,60 +273,6 @@ func TestProductFreightZoomAPI(t *testing.T) {
 	if fResponse.Estimates[0].CarrierCode == "" {
 		t.Errorf("No valid carrier code.")
 		return
-	}
-}
-
-// Freight deadline and price.
-func TestFreightZoomAPI(t *testing.T) {
-	t.SkipNow()
-	p := pack{
-		CEPDestiny: "5-76-25-000",
-		// DestinyCEP: "31170210",
-		Weight: 1500, // g.
-		Length: 20,   // cm.
-		Height: 30,   // cm.
-		Width:  40,   // cm.
-	}
-	if !p.ValidateCorreios() {
-		t.Errorf("Not a valid pack to estimate correios shipping. Pack: %+v", p)
-	}
-
-	reqBody, err := json.Marshal(p)
-	if err != nil {
-		t.Error(err)
-	}
-	// log.Println("request body: " + string(reqBody))
-
-	url := "/freightsrv/freights/zoom"
-	want := []string{"Correios", "Transportadora"}
-
-	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
-
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-	// log.Printf("res.Body: %s", res.Body.String())
-
-	frInfoS := []freightInfo{}
-	json.Unmarshal(res.Body.Bytes(), &frInfoS)
-	// log.Printf("frInfoS: %+v", frInfoS)
-
-	// got := res.Body.String()
-
-	for _, frInfo := range frInfoS {
-		valid := false
-		for _, wantCarrier := range want {
-			if strings.Contains(frInfo.Carrier, wantCarrier) {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			t.Errorf("got:  %q, want some of %q", frInfo.Carrier, want)
-		}
 	}
 }
 
