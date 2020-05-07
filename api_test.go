@@ -242,11 +242,15 @@ func TestProductFreightZoomAPI(t *testing.T) {
 	}
 	// log.Printf("res.Body: %s", res.Body.String())
 
-	fResponse := zoomFregihtResponse{
-		// No sense, because just the first product.
-		ID: fRequest.Items[0].ProductId,
-	}
-	json.Unmarshal(res.Body.Bytes(), &fResponse.Estimates)
+	// fResponse := zoomFregihtResponse{
+	// // No sense, because just the first product.
+	// ID: fRequest.Items[0].ProductId,
+	// }
+	// json.Unmarshal(res.Body.Bytes(), &fResponse.Estimates)
+	// // log.Printf("fResponse: %+v", fResponse)
+
+	fResponse := zoomFregihtResponse{}
+	json.Unmarshal(res.Body.Bytes(), &fResponse)
 	// log.Printf("fResponse: %+v", fResponse)
 
 	// Some estimate.

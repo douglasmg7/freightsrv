@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -230,15 +231,30 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 		}
 	}
 
+	zoomFrResponse := zoomFregihtResponse{
+		ID:        strconv.FormatInt(time.Now().Unix(), 10),
+		Estimates: zoomFrEst,
+	}
+
 	// log.Printf("zoomFrEst: %v", zoomFrEst)
-	zoomFrEstJSON, err := json.Marshal(zoomFrEst)
+	zoomFrResponseJSON, err := json.Marshal(zoomFrResponse)
 	if err != nil {
 		HandleError(w, err)
 		return
 	}
-	log.Printf("[debug] zoom freight response: %v", string(zoomFrEstJSON))
+	log.Printf("[debug] zoom freight response: %v", string(zoomFrResponseJSON))
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(zoomFrEstJSON)
+	w.Write(zoomFrResponseJSON)
+
+	// // log.Printf("zoomFrEst: %v", zoomFrEst)
+	// zoomFrEstJSON, err := json.Marshal(zoomFrEst)
+	// if err != nil {
+	// HandleError(w, err)
+	// return
+	// }
+	// log.Printf("[debug] zoom freight response: %v", string(zoomFrEstJSON))
+	// w.Header().Set("Content-Type", "application/json")
+	// w.Write(zoomFrEstJSON)
 }
 
 // Create pack.
