@@ -1,8 +1,11 @@
 package main
 
 const (
-	version string = "1.4.1"
-	// Not auth to zoom freight request.
+	version string = "1.4.2"
+	// Included id and estimates to zoom freight response.
+
+	// version string = "1.4.1"
+	// // Not auth to zoom freight request.
 
 	// version string = "1.4.0"
 	// // Using POST for zoom freight request.
