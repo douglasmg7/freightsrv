@@ -109,15 +109,22 @@ func (p *pack) Validate() bool {
 	return true
 }
 
+type zunkaProducts struct {
+	products   []zunkaProduct `json:"products"`
+	cepDestiny string         `json:"cepDestiny"`
+}
+
 // Zunka product.
 type zunkaProduct struct {
-	ID     string  `json:"id"`
-	Dealer string  `json:"dealer"` // Dealer.
-	Length int     `json:"length"` // cm.
-	Width  int     `json:"width"`  // cm.
-	Height int     `json:"height"` // cm.
-	Weight int     `json:"weight"` // grams.
-	Price  float64 `json:"price"`  // R$.
+	ID            string  `json:"id"`
+	Dealer        string  `json:"dealer"`        // Dealer.
+	StockLocation string  `json:"stockLocation"` // SC, SP, RJ...
+	Length        int     `json:"length"`        // cm.
+	Width         int     `json:"width"`         // cm.
+	Height        int     `json:"height"`        // cm.
+	Weight        int     `json:"weight"`        // grams.
+	Quantity      int     `json:"quantity"`
+	Price         float64 `json:"price"` // R$.
 }
 
 // Zoom freight request.

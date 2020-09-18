@@ -16,6 +16,123 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// Freight by product for Zunka.
+func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+	body, err := ioutil.ReadAll(req.Body)
+	if checkError(err) {
+		http.Error(w, "Error reading body: %v", http.StatusInternalServerError)
+		return
+	}
+	// log.Printf("body: %s", string(body))
+	p := pack{}
+	zunkaProducts := zunkaProducts{}
+
+	err = json.Unmarshal(body, &zunkaProducts)
+	if checkError(err) {
+		http.Error(w, "Error unmarshalling body: %v", http.StatusInternalServerError)
+		return
+	}
+	log.Printf("[debug] products zunka: %+v", zunkaProducts)
+
+	// Create packages for each part of freight.
+	aldoToZunkaProducts := []zunkaProduct{}
+	allnationsSCToZunkaProducts := []zunkaProduct{}
+	allnationsRJToZunkaProducts := []zunkaProduct{}
+	zunkaToClientProducts := []zunkaProduct{}
+
+	for _, product := range zunkaProducts.products {
+		zunkaToClientProducts = append(zunkaToClientProducts, product)
+		switch strings.ToLower(product.Dealer) {
+		case "aldo":
+			aldoToZunkaProducts = append(aldoToZunkaProducts, product)
+		case "allnations":
+			switch strings.ToLower(product.StockLocation) {
+			case "sc":
+				allnationsSCToZunkaProducts = append(allnationsSCToZunkaProducts, product)
+			case "rj":
+				allnationsRJToZunkaProducts = append(allnationsRJToZunkaProducts, product)
+			}
+		}
+	}
+
+	// Create packs.
+	aldoToZunkaPack := createPackV2(CEP_ALDO, CEP_ZUNKA, aldoToZunkaProducts)
+	allnationsSCToZunkaPack := createPackV2(CEP_ALLNATIONS_SC, CEP_ZUNKA, allnationsSCToZunkaProducts)
+	allnationsRJToZunkaPack := createPackV2(CEP_ALLNATIONS_RJ, CEP_ZUNKA, allnationsRJToZunkaProducts)
+	zunkaToClientPack := createPackV2(CEP_ZUNKA, CEP_ZUNKA, zunkaToClientProducts)
+
+	// var deadlinePlus int
+	// var includeMotoboy bool
+	// switch strings.ToLower(p.Dealer) {
+	// case "aldo":
+	// includeMotoboy = true
+	// deadlinePlus = 3
+	// default:
+	// includeMotoboy = true
+	// deadlinePlus = 0
+	// }
+
+	// Correios
+	cCorreios := make(chan *freightsOk)
+	go getCorreiosFreightByPack(cCorreios, &p)
+
+	// Motoboy.
+	cMotoboy := make(chan *freightsOk)
+	go getMotoboyFreightByCEP(cMotoboy, p.CEPDestiny)
+
+	// Region.
+	cRegion := make(chan *freightsOk)
+	go getFreightRegionByCEPAndWeight(cRegion, p.CEPDestiny, p.Weight)
+
+	frsOkMotoboy, frsOkCorreios, frsOkRegion := <-cMotoboy, <-cCorreios, <-cRegion
+
+	frInfoS := []freightInfo{}
+	// Correios result.
+	if frsOkCorreios.Ok {
+		for _, pfr := range frsOkCorreios.Freights {
+			frInfoS = append(frInfoS, freightInfo{
+				Carrier:     pfr.Carrier,
+				ServiceCode: pfr.ServiceCode,
+				ServiceDesc: pfr.ServiceDesc,
+				Deadline:    pfr.Deadline + deadlinePlus,
+				Price:       pfr.Price,
+			})
+			// log.Printf("Correio freight: %+v", *pfr)
+		}
+	}
+
+	// Region result, if no Correios result.
+	if len(frInfoS) == 0 && frsOkRegion.Ok {
+		for _, pfr := range frsOkRegion.Freights {
+			frInfoS = append(frInfoS, freightInfo{
+				Carrier:  pfr.Carrier,
+				Deadline: pfr.Deadline + deadlinePlus,
+				Price:    pfr.Price,
+			})
+			// log.Printf("Region freight: %+v", *pfr)
+		}
+	}
+
+	// Motoboy result.
+	if frsOkMotoboy.Ok && includeMotoboy {
+		// Motoboy return only one freight.
+		frInfoS = append(frInfoS, freightInfo{
+			Carrier:  frsOkMotoboy.Freights[0].Carrier,
+			Deadline: frsOkMotoboy.Freights[0].Deadline + deadlinePlus,
+			Price:    frsOkMotoboy.Freights[0].Price,
+		})
+		// log.Printf("Motoboy freight: %+v", *frsOkMotoboy.Freights[0])
+	}
+
+	frInfoSJson, err := json.Marshal(frInfoS)
+	if err != nil {
+		HandleError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(frInfoSJson)
+}
+
 // Freight for Zunka.
 func freightsZunkaHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	body, err := ioutil.ReadAll(req.Body)
@@ -255,6 +372,52 @@ func freightsZoomHandler(w http.ResponseWriter, req *http.Request, ps httprouter
 	// log.Printf("[debug] zoom freight response: %v", string(zoomFrEstJSON))
 	// w.Header().Set("Content-Type", "application/json")
 	// w.Write(zoomFrEstJSON)
+}
+
+// Create pack.
+func createPackV2(CEPOrigin string, CEPDestiny string, products []zunkaProduct) (p pack, ok bool) {
+	if len(products) == 0 {
+		return
+	}
+	p.CEPOrigin = CEPOrigin
+	p.CEPDestiny = CEPDestiny
+	// Products loop.
+	for _, product := range products {
+		// Invalid measurments.
+		if product.Length == 0 || product.Width == 0 || product.Height == 0 || product.Weight == 0 || product.Price == 0 {
+			checkError(fmt.Errorf("Invalid product dimensions: %v", product))
+			return
+		}
+		// Invalid price.
+		if product.Price < 1.0 || product.Price > 1000000.0 {
+			checkError(fmt.Errorf("Invalid product price: %v", product))
+			return
+		}
+		// Price.
+		p.Price += (product.Price * float64(product.Quantity))
+		// // Check delay.
+		// switch strings.ToLower(product.Dealer) {
+		// case "aldo":
+		// if p.ShipmentDelay < 3 {
+		// p.ShipmentDelay = 3
+		// }
+		// }
+		// Sort dimensions as lenght > width > height.
+		dim := []int{product.Length, product.Width, product.Height}
+		sort.Ints(dim)
+		// Length.
+		if dim[2] > p.Length {
+			p.Length = dim[2]
+		}
+		// Width.
+		if dim[1] > p.Width {
+			p.Width = dim[1]
+		}
+		// Height.
+		p.Height += dim[0] * product.Quantity
+		p.Weight += product.Weight * product.Quantity
+	}
+	return p, true
 }
 
 // Create pack.
