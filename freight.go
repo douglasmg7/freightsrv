@@ -24,8 +24,10 @@ type freightInfo struct {
 }
 
 type freightsOk struct {
-	Freights []*freight
-	Ok       bool
+	Freights   []*freight
+	Ok         bool
+	CEPOrigin  string
+	CEPDestiny string
 }
 
 type regionFreight struct {
@@ -156,4 +158,22 @@ type zoomFregihtEstimate struct {
 	Deadline    int     `json:"daysToDelivery"`
 	CarrierName string  `json:"methodName"`
 	CarrierCode string  `json:"methodId"`
+}
+
+// CEP by dealer location.
+func cepByDealerLocation(dealer string, stockLocation string) string {
+	switch strings.ToLower(dealer) {
+	case "aldo":
+		return CEP_ALDO
+	case "allnations":
+		switch strings.ToLower(stockLocation) {
+		case "es":
+			return CEP_ALLNATIONS_ES
+		case "rj":
+			return CEP_ALLNATIONS_RJ
+		case "sc":
+			return CEP_ALLNATIONS_SC
+		}
+	}
+	return ""
 }
