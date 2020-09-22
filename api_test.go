@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -129,6 +130,403 @@ func TestGetAddressByCEPAPI(t *testing.T) {
 /******************************************************************************
 * Freights
 *******************************************************************************/
+// Zunka freight correios and motoboy.
+func Test_FreightZunkaAPIV2CorreiosAndMotoboy(t *testing.T) {
+	productsIn := zunkaProducts{
+		CepDestiny: "31170210",
+		Products: []zunkaProduct{
+			{
+				ID:            "1234",
+				Dealer:        "Dell",
+				StockLocation: "",
+				Length:        20,
+				Width:         90,
+				Height:        39,
+				Weight:        1250,
+				Quantity:      1,
+				Price:         2512.22,
+			},
+		},
+	}
+
+	// log.Printf("productsIn: %+v\n", productsIn)
+	reqBody, err := json.Marshal(productsIn)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frs := []freight{}
+	json.Unmarshal(res.Body.Bytes(), &frs)
+	// log.Printf("frs: %+v", frs)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreiosOrTransporter := true
+
+	for _, fr := range frs {
+		if fr.Carrier == "Correios" || fr.Carrier == "Transportadora" {
+			haveCorreiosOrTransporter = true
+		}
+		if fr.Carrier == "Correios" {
+			if fr.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if fr.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		}
+		if fr.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreiosOrTransporter {
+		t.Errorf("got:  %q, no Correios neither Transportadora carrier", got)
+	}
+	if !haveMotoboy {
+		t.Errorf("got:  %q, no Motoboy carrier", got)
+	}
+}
+
+// Zunka freight only correios.
+func Test_FreightZunkaAPIV2OnlyCorreios(t *testing.T) {
+	productsIn := zunkaProducts{
+		CepDestiny: "88512530",
+		Products: []zunkaProduct{
+			{
+				ID:            "1234",
+				Dealer:        "Dell",
+				StockLocation: "",
+				Length:        20,
+				Width:         90,
+				Height:        39,
+				Weight:        250,
+				Quantity:      2,
+				Price:         512.22,
+			},
+		},
+	}
+
+	// log.Printf("productsIn: %+v\n", productsIn)
+	reqBody, err := json.Marshal(productsIn)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frs := []freight{}
+	json.Unmarshal(res.Body.Bytes(), &frs)
+	// log.Printf("frs: %+v", frs)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreios := false
+	haveTransporter := false
+
+	for _, fr := range frs {
+		if strings.HasPrefix(fr.Carrier, "Transportadora") {
+			haveTransporter = true
+		} else if fr.Carrier == "Correios" {
+			haveCorreios = true
+			if fr.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if fr.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		} else if fr.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreios {
+		t.Errorf("got:  %q, no Correios carrier", got)
+	}
+	if haveTransporter {
+		t.Errorf("got:  %q, hava a Transportadora carrier", got)
+	}
+	if haveMotoboy {
+		t.Errorf("got:  %q, hava a Motoboy carrier", got)
+	}
+}
+
+// Zunka freight only transportadora.
+func Test_FreightZunkaAPIV2OnlyTransportadora(t *testing.T) {
+	productsIn := zunkaProducts{
+		CepDestiny: "88512530",
+		// Use a lenght not supported by Correios carrier.
+		Products: []zunkaProduct{
+			{
+				ID:            "1234",
+				Dealer:        "Dell",
+				StockLocation: "",
+				Length:        200,
+				Width:         90,
+				Height:        39,
+				Weight:        250,
+				Quantity:      2,
+				Price:         512.22,
+			},
+		},
+	}
+
+	// log.Printf("productsIn: %+v\n", productsIn)
+	reqBody, err := json.Marshal(productsIn)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frs := []freight{}
+	json.Unmarshal(res.Body.Bytes(), &frs)
+	// log.Printf("frs: %+v", frs)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreios := false
+	haveTransporter := false
+
+	for _, fr := range frs {
+		if strings.HasPrefix(fr.Carrier, "Transportadora") {
+			haveTransporter = true
+		} else if fr.Carrier == "Correios" {
+			haveCorreios = true
+			if fr.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if fr.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		} else if fr.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if haveCorreios {
+		t.Errorf("got:  %q, have Correios carrier", got)
+	}
+	if !haveTransporter {
+		t.Errorf("got:  %q, not hava a Transportadora carrier", got)
+	}
+	if haveMotoboy {
+		t.Errorf("got:  %q, hava a Motoboy carrier", got)
+	}
+}
+
+// Zunka freight dealer to client.
+func Test_FreightZunkaAPIV2DealerOnlyCorreios(t *testing.T) {
+	productsIn := zunkaProducts{
+		CepDestiny: "88512530",
+		Products: []zunkaProduct{
+			{
+				ID:            "1234",
+				Dealer:        "Aldo",
+				StockLocation: "",
+				Length:        20,
+				Width:         90,
+				Height:        39,
+				Weight:        1250,
+				Quantity:      2,
+				Price:         2512.22,
+			},
+		},
+	}
+
+	// log.Printf("productsIn: %+v\n", productsIn)
+	reqBody, err := json.Marshal(productsIn)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frs := []freight{}
+	json.Unmarshal(res.Body.Bytes(), &frs)
+	log.Printf("frs: %+v", frs)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreios := false
+	haveTransporter := false
+
+	for _, fr := range frs {
+		if strings.HasPrefix(fr.Carrier, "Transportadora") {
+			haveTransporter = true
+		} else if fr.Carrier == "Correios" {
+			haveCorreios = true
+			if fr.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if fr.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		}
+		if fr.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreios {
+		t.Errorf("got:  %q, not have Correios carrier", got)
+	}
+	if haveTransporter {
+		t.Errorf("got:  %q, have transportadora carrier", got)
+	}
+	if haveMotoboy {
+		t.Errorf("got:  %q, have motoboy carrier", got)
+	}
+}
+
+// Zunka freight dealer to client.
+func Test_FreightZunkaAPIV2DealerSeveral(t *testing.T) {
+	productsIn := zunkaProducts{
+		CepDestiny: "88512530",
+		Products: []zunkaProduct{
+			{
+				ID:            "1234",
+				Dealer:        "",
+				StockLocation: "",
+				Length:        20,
+				Width:         3,
+				Height:        10,
+				Weight:        120,
+				Quantity:      1,
+				Price:         200.0,
+			},
+			{
+				ID:            "1234",
+				Dealer:        "Aldo",
+				StockLocation: "",
+				Length:        20,
+				Width:         3,
+				Height:        10,
+				Weight:        121,
+				Quantity:      1,
+				Price:         200.1,
+			},
+			{
+				ID:            "1234",
+				Dealer:        "Allnations",
+				StockLocation: "ES",
+				Length:        20,
+				Width:         3,
+				Height:        10,
+				Weight:        122,
+				Quantity:      1,
+				Price:         200.2,
+			},
+			{
+				ID:            "1234",
+				Dealer:        "Allnations",
+				StockLocation: "RJ",
+				Length:        20,
+				Width:         3,
+				Height:        10,
+				Weight:        123,
+				Quantity:      1,
+				Price:         220.3,
+			},
+		},
+	}
+
+	// log.Printf("productsIn: %+v\n", productsIn)
+	reqBody, err := json.Marshal(productsIn)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frs := []freight{}
+	json.Unmarshal(res.Body.Bytes(), &frs)
+	log.Printf("frs: %+v", frs)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreios := false
+	haveTransporter := false
+
+	for _, fr := range frs {
+		if strings.HasPrefix(fr.Carrier, "Transportadora") {
+			haveTransporter = true
+		} else if fr.Carrier == "Correios" {
+			haveCorreios = true
+			if fr.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if fr.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		}
+		if fr.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreios && !haveTransporter && !haveMotoboy {
+		t.Errorf("got:  %q, None freight", got)
+	}
+}
+
 // Zunka freight local stock to BH.
 func Test_FreightZunkaAPI(t *testing.T) {
 	p := pack{

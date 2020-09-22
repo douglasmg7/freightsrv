@@ -17,88 +17,81 @@ import (
 )
 
 // Freight by product for Zunka.
-func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
+func freightsZunkaHandlerV2(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 	body, err := ioutil.ReadAll(req.Body)
 	if checkError(err) {
 		http.Error(w, "Error reading body: %v", http.StatusInternalServerError)
 		return
 	}
 	// log.Printf("body: %s", string(body))
-	p := pack{}
-	zunkaProducts := zunkaProducts{}
+	productsIn := zunkaProducts{}
 
-	err = json.Unmarshal(body, &zunkaProducts)
+	err = json.Unmarshal(body, &productsIn)
 	if checkError(err) {
 		http.Error(w, "Error unmarshalling body: %v", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("[debug] products zunka: %+v", zunkaProducts)
-
-	// Create packages for each part of freight.
-	// aldoToZunkaProducts := []zunkaProduct{}
-	// allnationsESToZunkaProducts := []zunkaProduct{}
-	// allnationsRJToZunkaProducts := []zunkaProduct{}
-	// allnationsSCToZunkaProducts := []zunkaProduct{}
+	// log.Printf("[debug] products zunka: %+v", productsIn)
 
 	// Products list for each dealer location.
-	dealerToZunkaProductsMap := make(map[string][]zunkaProduct)
-	// Products list to client.
-	zunkaToClientProducts := []zunkaProduct{}
+	dealerProductsMap := make(map[string][]zunkaProduct)
+	for _, product := range productsIn.Products {
+		if product.Dealer == "Aldo" || product.Dealer == "Allnations" {
+			// Invalid lenght.
+			if product.Length == 0 {
+				http.Error(w, fmt.Sprintf("Invalid product [%v] length [%v].", product.ID, product.Length), http.StatusBadRequest)
+				return
+			}
+			// Invalid width.
+			if product.Width == 0 {
+				http.Error(w, fmt.Sprintf("Invalid product [%v] width [%v].", product.ID, product.Width), http.StatusBadRequest)
+				return
+			}
+			// Invalid height.
+			if product.Height == 0 {
+				http.Error(w, fmt.Sprintf("Invalid product [%v] height [%v].", product.ID, product.Height), http.StatusBadRequest)
+				return
+			}
+			// Invalid weight.
+			if product.Weight == 0 {
+				http.Error(w, fmt.Sprintf("Invalid product [%v] weight [%v].", product.ID, product.Weight), http.StatusBadRequest)
+				return
+			}
+			// Invalid price.
+			if product.Price < 1.0 || product.Price > 1000000.0 {
+				http.Error(w, fmt.Sprintf("Invalid product [%v] price [%v].", product.ID, product.Price), http.StatusBadRequest)
+				return
+			}
 
-	for _, product := range zunkaProducts.products {
-		// Invalid lenght.
-		if product.Length == 0 {
-			http.Error(w, fmt.Sprintf("Invalid product [%v] length [%v].", product.ID, product.Length), http.StatusBadRequest)
-			return
-		}
-		// Invalid width.
-		if product.Width == 0 {
-			http.Error(w, fmt.Sprintf("Invalid product [%v] width [%v].", product.ID, product.Width), http.StatusBadRequest)
-			return
-		}
-		// Invalid height.
-		if product.Height == 0 {
-			http.Error(w, fmt.Sprintf("Invalid product [%v] height [%v].", product.ID, product.Height), http.StatusBadRequest)
-			return
-		}
-		// Invalid weight.
-		if product.Weight == 0 {
-			http.Error(w, fmt.Sprintf("Invalid product [%v] weight [%v].", product.ID, product.Weight), http.StatusBadRequest)
-			return
-		}
-		// Invalid price.
-		if product.Price < 1.0 || product.Price > 1000000.0 {
-			http.Error(w, fmt.Sprintf("Invalid product [%v] price [%v].", product.ID, product.Price), http.StatusBadRequest)
-			return
-		}
-
-		zunkaToClientProducts = append(zunkaToClientProducts, product)
-		dealer := strings.ToLower(product.Dealer) + "_" + strings.ToLower(product.StockLocation)
-		dealerToZunkaProducts, ok := dealerToZunkaProductsMap[dealer]
-		if ok {
-			dealerToZunkaProducts = append(dealerToZunkaProducts, product)
-		} else {
-			dealerToZunkaProductsMap[dealer] = []zunkaProduct{product}
+			dealer := strings.ToLower(product.Dealer) + "_" + strings.ToLower(product.StockLocation)
+			dealerToZunkaProducts, ok := dealerProductsMap[dealer]
+			if ok {
+				dealerToZunkaProducts = append(dealerToZunkaProducts, product)
+			} else {
+				dealerProductsMap[dealer] = []zunkaProduct{product}
+			}
 		}
 	}
 
 	// Create packs.
 	// Zunka to client.
-	zunkaToClientPack, err := createPackV2(zunkaProducts.cepDestiny, CEP_ZUNKA, zunkaToClientProducts)
+	zunkaToClientPack, err := createPackV2(CEP_ZUNKA, productsIn.CepDestiny, productsIn.Products)
+	// log.Printf("Zunka pack: %+v\n\n", zunkaToClientPack)
 	if checkError(err) {
 		http.Error(w, "Could not create package. %v", http.StatusInternalServerError)
 	}
 	// Dealer to zunka.
-	dealerToZunkaPacks := []pack{}
-	for _, dealerToZunkaProducts := range dealerToZunkaProductsMap {
-		p, err := createPackV2(cepByDealerLocation(dealerToZunkaProducts[0].Dealer, dealerToZunkaProducts[0].StockLocation), CEP_ZUNKA, dealerToZunkaProducts)
+	dealerPacks := []pack{}
+	for _, dealerToZunkaProducts := range dealerProductsMap {
+		p, err := createPackV2(getCEPByDealerLocation(dealerToZunkaProducts[0].Dealer, dealerToZunkaProducts[0].StockLocation), CEP_ZUNKA, dealerToZunkaProducts)
+		// log.Printf("Dealer pack: %+v\n\n", p)
 		if checkError(err) {
 			http.Error(w, "Could not create package. %v", http.StatusInternalServerError)
 		}
-		dealerToZunkaPacks = append(dealerToZunkaPacks, p)
+		dealerPacks = append(dealerPacks, p)
 	}
 	// Number of pakcs come from dealers, one for each.
-	dealerPacksCount := len(dealerToZunkaPacks)
+	dealerPacksCount := len(dealerPacks)
 
 	chanFreightS := [](chan *freightsOk){}
 
@@ -115,14 +108,19 @@ func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps 
 	// Zunka region.
 	chanFreight = make(chan *freightsOk)
 	chanFreightS = append(chanFreightS, chanFreight)
-	go getFreightRegionByCEPAndWeight(chanFreight, zunkaToClientPack.CEPDestiny, p.Weight)
+	go getFreightRegionByCEPAndWeight(chanFreight, zunkaToClientPack.CEPDestiny, zunkaToClientPack.Weight)
 
 	// Dealer correios.
-	for _, dealerToZunkaPack := range dealerToZunkaPacks {
-		cCorreiosDealer := make(chan *freightsOk)
-		chanFreightS = append(chanFreightS, cCorreiosDealer)
-		go getCorreiosFreightByPack(cCorreiosDealer, &dealerToZunkaPack)
+	for i := range dealerPacks {
+		chanDealer := make(chan *freightsOk)
+		chanFreightS = append(chanFreightS, chanDealer)
+		// dealerPacks[i].Dealer = fmt.Sprintf("%v", i)
+		// log.Printf("pack: %+v", &dealerPacks[i])
+		go getCorreiosFreightByPack(chanDealer, &dealerPacks[i])
 	}
+
+	// Dealer region.
+	// todo.
 
 	frZunkaCorreiosS := []*freight{}
 	frZunkaRegionS := []*freight{}
@@ -130,45 +128,52 @@ func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps 
 
 	type dealerFreights struct {
 		dealerCount int
-		*freight
+		freight
 	}
-	frDealerCorreiosSumByServiceCode := make(map[string]dealerFreights)
-	frDealerRegionSumByServiceCode := make(map[string]dealerFreights)
+
+	// Sum freight by service code.
+	dealerFrCorreiosSum := make(map[string]*dealerFreights)
+	dealerFrRegionSum := make(map[string]*dealerFreights)
 	for _, c := range chanFreightS {
 		frsOk := <-c
 		if frsOk.Ok {
+			// log.Printf("\nfrsOk: %+v\n", frsOk)
 			for _, fr := range frsOk.Freights {
+				// log.Printf("fr: %+v\n", fr)
 				switch frsOk.CEPOrigin {
-				// From zunka to clients.
+				// Zunka to clients.
 				case CEP_ZUNKA:
 					switch fr.Carrier {
 					case "Correios":
 						frZunkaCorreiosS = append(frZunkaCorreiosS, fr)
-					case "Region":
-						frZunkaRegionS = append(frZunkaCorreiosS, fr)
 					case "Motoboy":
-						frZunkaMotoboyS = append(frZunkaCorreiosS, fr)
+						frZunkaMotoboyS = append(frZunkaMotoboyS, fr)
+					default:
+						// Transportadora (tabela).
+						frZunkaRegionS = append(frZunkaRegionS, fr)
 					}
-				// From dealers to zunka.
+				// Dealers to zunka.
 				default:
-					var frSumMap map[string]dealerFreights
+					var frSumMap map[string]*dealerFreights
 					switch fr.Carrier {
 					case "Correios":
-						frSumMap = frDealerCorreiosSumByServiceCode
+						frSumMap = dealerFrCorreiosSum
 					case "Region":
-						frSumMap = frDealerRegionSumByServiceCode
+						frSumMap = dealerFrRegionSum
 					}
-					frSum, ok := frDealerCorreiosSumByServiceCode[fr.ServiceCode]
+					frSum, ok := frSumMap[fr.ServiceCode]
 					if ok {
 						frSum.freight.Price += fr.Price
 						if fr.Deadline > frSum.freight.Deadline {
 							frSum.freight.Deadline = fr.Deadline
 						}
 						frSum.dealerCount++
+						// log.Printf("frSum: %+v", frSum)
+						// log.Printf("dealerFrCorreiosSum: %+v", dealerFrCorreiosSum)
 					} else {
-						frDealerCorreiosSumByServiceCode[fr.ServiceCode] = dealerFreights{
+						frSumMap[fr.ServiceCode] = &dealerFreights{
 							dealerCount: 1,
-							freight: &freight{
+							freight: freight{
 								Carrier:     fr.Carrier,
 								ServiceCode: fr.ServiceCode,
 								ServiceDesc: fr.ServiceDesc,
@@ -176,62 +181,36 @@ func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps 
 								Price:       fr.Price,
 							},
 						}
+						// log.Printf("dealerFrCorreiosSum: %+v", dealerFrCorreiosSum)
 					}
 				}
 			}
 		}
 	}
-
-	// // Freights by carrier-service-code.
-	// serviceCodeCorreiosFreightsDealerToZunkaMap := make(map[string][]*freight)
-	// serviceCodeCorreiosFreightsDealerToZunkaSumMap := make(map[string]*freightInfo)
-	// for _, srvCodeFreightS := range serviceCodeCorreiosFreightsDealerToZunkaMap {
-	// // Have this service code for all dealer to client package.
-	// if len(srvCodeFreightS) == len(dealerToZunkaPacks) {
-	// for _, srvCodeFreight := range srvCodeFreightS {
-	// fr, ok := serviceCodeCorreiosFreightsDealerToZunkaSumMap[srvCodeFreight.ServiceCode]
-	// if ok {
-	// fr.Price += srvCodeFreight.Price
-	// if srvCodeFreight.Deadline > fr.Deadline {
-	// fr.Deadline += srvCodeFreight.Deadline
-	// }
-	// } else {
-	// serviceCodeCorreiosFreightsDealerToZunkaSumMap[srvCodeFreight.ServiceCode] = &freightInfo{
-	// Carrier:     srvCodeFreight.Carrier,
-	// ServiceCode: srvCodeFreight.ServiceCode,
-	// ServiceDesc: srvCodeFreight.ServiceDesc,
-	// Deadline:    srvCodeFreight.Deadline,
-	// Price:       srvCodeFreight.Price,
-	// }
-	// }
-
-	// }
-	// }
-	// }
+	// log.Printf("dealerFrCorreiosSum: %+v", dealerFrCorreiosSum)
 
 	// Freights with all necessaries leg added.
-	var frCorreios []*freight
-	var frRegion []*freight
-	var frMotoboy []*freight
-
+	var frsOut []*freight
 	// Some pack come from dealer.
 	if dealerPacksCount > 0 {
-		// Get only valid dealer correios.
-		var temp map[string]dealerFreights
-		for key, val := range frDealerCorreiosSumByServiceCode {
+		// log.Printf("\nPacks from Dealer to zunka")
+		// Get only valid dealer correios. Maybe some service code not received for all dealer package.
+		temp := map[string]*dealerFreights{}
+		for key, val := range dealerFrCorreiosSum {
 			if val.dealerCount == dealerPacksCount {
 				temp[key] = val
 			}
 		}
-		frDealerCorreiosSumByServiceCode = temp
+		dealerFrCorreiosSum = temp
+		// log.Printf("dealerFrCorreiosSum: %+v", dealerFrCorreiosSum)
 
 		// Correios.
-		// Add dealer to zunka.
+		// Add the two legs.
 		for _, frZunka := range frZunkaCorreiosS {
-			frDealer, ok := frDealerCorreiosSumByServiceCode[frZunka.ServiceCode]
-			// If have and received all dealer freights.
+			frDealer, ok := dealerFrCorreiosSum[frZunka.ServiceCode]
+			// If have the same service code for the two legs.
 			if ok {
-				frCorreios = append(frCorreios, &freight{
+				frsOut = append(frsOut, &freight{
 					Carrier:     frZunka.Carrier,
 					ServiceCode: frZunka.ServiceCode,
 					ServiceDesc: frZunka.ServiceDesc,
@@ -242,7 +221,7 @@ func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps 
 		}
 		// Region.
 		// Only if no correios result.
-		if len(frCorreios) == 0 {
+		if len(frsOut) == 0 {
 			// Sum min with min, max with max.
 			frZunkaMin := freight{
 				Deadline: 1000,
@@ -256,7 +235,8 @@ func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps 
 			frDealerMax := freight{
 				Deadline: 0,
 			}
-			for _, frZunka := range frZunkaRegionS {
+			// First leg correios.
+			for _, frZunka := range frZunkaCorreiosS {
 				if frZunka.Deadline > frZunkaMax.Deadline {
 					frZunkaMax = *frZunka
 				}
@@ -264,83 +244,93 @@ func freightsZunkaByProductHandler(w http.ResponseWriter, req *http.Request, ps 
 					frZunkaMin = *frZunka
 				}
 			}
-			for _, frDealer := range frDealerCorreiosSumByServiceCode {
-				if frDealer.Deadline > frDealerMax.Deadline {
-					frDealerMax = *frDealer.freight
-				}
-				if frDealer.Deadline < frDealerMin.Deadline {
-					frDealerMin = *frDealer.freight
+			// Not have first leg correios.
+			if frZunkaMin.Carrier == "" {
+				for _, frZunka := range frZunkaRegionS {
+					if frZunka.Deadline > frZunkaMax.Deadline {
+						frZunkaMax = *frZunka
+					}
+					if frZunka.Deadline < frZunkaMin.Deadline {
+						frZunkaMin = *frZunka
+					}
 				}
 			}
-			frRegion = []*freight{
-				&freight{
-					Carrier:     frZunkaMin.Carrier,
+			// Second leg correios.
+			for _, frDealer := range dealerFrCorreiosSum {
+				if frDealer.Deadline > frDealerMax.Deadline {
+					frDealerMax = frDealer.freight
+				}
+				if frDealer.Deadline < frDealerMin.Deadline {
+					frDealerMin = frDealer.freight
+				}
+			}
+			// Not have second leg correios.
+			if frDealerMin.Carrier == "" {
+				// todo.
+				// for _, frDealer := range frDealerRegionS {
+				// if frDealer.Deadline > frDealerMax.Deadline {
+				// frDealerMax = *frDealer
+				// }
+				// if frDealer.Deadline < frDealerMin.Deadline {
+				// frDealerMin = *frDealer
+				// }
+				// }
+			}
+			// Get the two legs.
+			if frZunkaMin.Carrier != "" && frDealerMin.Carrier != "" {
+				carrier := "Transportadora 1"
+				if frZunkaMin.Carrier == frDealerMin.Carrier {
+					carrier = frZunkaMin.Carrier
+				}
+				frsOut = append(frsOut, &freight{
+					Carrier:     carrier,
 					ServiceCode: frZunkaMin.ServiceCode,
 					ServiceDesc: frZunkaMin.ServiceDesc,
 					Price:       frZunkaMin.Price + frDealerMin.Price,
 					Deadline:    frZunkaMin.Deadline + frDealerMin.Deadline,
-				},
-				&freight{
-					Carrier:     frZunkaMax.Carrier,
+				})
+				carrier = "Transportadora 2"
+				if frZunkaMax.Carrier == frDealerMax.Carrier {
+					carrier = frZunkaMax.Carrier
+				}
+				frsOut = append(frsOut, &freight{
+					Carrier:     carrier,
 					ServiceCode: frZunkaMax.ServiceCode,
 					ServiceDesc: frZunkaMax.ServiceDesc,
 					Price:       frZunkaMax.Price + frDealerMax.Price,
 					Deadline:    frZunkaMax.Deadline + frDealerMax.Deadline,
-				},
+				})
 			}
 		}
 	} else {
 		// All product on zunka stock, nothing coming from dealers.
-		frCorreios = frZunkaCorreiosS
-		frRegion = frZunkaRegionS
+		frsOut = frZunkaCorreiosS
+		// log.Printf("frsOut: %+v\n", frsOut)
+		// log.Printf("frsOut[0]: %+v\n\n", frsOut[0])
+		// log.Printf("frsOk.Freights[0]: %+v\n\n", frsOk.Freights[0])
 
+		// Add region freights if no correios freights.
+		if len(frsOut) == 0 {
+			for _, fr := range frZunkaRegionS {
+				// log.Printf("frZunkaRegion: %+v\n", fr)
+				frsOut = append(frsOut, fr)
+			}
+		}
+		// Add motoboy freights.
+		for _, fr := range frZunkaMotoboyS {
+			// log.Printf("frZunkaMotoboy: %+v\n", fr)
+			frsOut = append(frsOut, fr)
+		}
 	}
 
-	// // frInfoS := []freightInfo{}
-	// // Correios result.
-	// if frsOkCorreios.Ok {
-	// for _, pfr := range frsOkCorreios.Freights {
-	// frInfoS = append(frInfoS, freightInfo{
-	// Carrier:     pfr.Carrier,
-	// ServiceCode: pfr.ServiceCode,
-	// ServiceDesc: pfr.ServiceDesc,
-	// Deadline:    pfr.Deadline,
-	// Price:       pfr.Price,
-	// })
-	// // log.Printf("Correio freight: %+v", *pfr)
-	// }
-	// }
-
-	// // Region result, if no Correios result.
-	// if len(frInfoS) == 0 && frsOkRegion.Ok {
-	// for _, pfr := range frsOkRegion.Freights {
-	// frInfoS = append(frInfoS, freightInfo{
-	// Carrier:  pfr.Carrier,
-	// Deadline: pfr.Deadline,
-	// Price:    pfr.Price,
-	// })
-	// // log.Printf("Region freight: %+v", *pfr)
-	// }
-	// }
-
-	// // Motoboy result.
-	// if frsOkMotoboy.Ok {
-	// // Motoboy return only one freight.
-	// frInfoS = append(frInfoS, freightInfo{
-	// Carrier:  frsOkMotoboy.Freights[0].Carrier,
-	// Deadline: frsOkMotoboy.Freights[0].Deadline,
-	// Price:    frsOkMotoboy.Freights[0].Price,
-	// })
-	// // log.Printf("Motoboy freight: %+v", *frsOkMotoboy.Freights[0])
-	// }
-
-	// frInfoSJson, err := json.Marshal(frInfoS)
-	// if err != nil {
-	// HandleError(w, err)
-	// return
-	// }
-	// w.Header().Set("Content-Type", "application/json")
-	// w.Write(frInfoSJson)
+	frsJson, err := json.Marshal(frsOut)
+	if err != nil {
+		HandleError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	// log.Printf("frsJson: %+v\n\n", string(frsJson))
+	w.Write(frsJson)
 }
 
 // Freight for Zunka.

@@ -109,6 +109,29 @@ func TestGetRegionByCEP(t *testing.T) {
 	}
 }
 
+// Get CEP by dealer location.
+func TestGetCEPByDealerLocation(t *testing.T) {
+	// Aldo.
+	cep := getCEPByDealerLocation("Aldo", "")
+	if cep == "" {
+		t.Errorf("No CEP returned.\n")
+	}
+	want := CEP_ALDO
+	if cep != want {
+		t.Errorf("result = %q, want %q", cep, want)
+	}
+
+	// Allnations ES.
+	cep = getCEPByDealerLocation("Allnations", "ES")
+	if cep == "" {
+		t.Errorf("No CEP returned.\n")
+	}
+	want = CEP_ALLNATIONS_ES
+	if cep != want {
+		t.Errorf("result = %q, want %q", cep, want)
+	}
+}
+
 //*****************************************************************************
 // CORREIOS
 //*****************************************************************************

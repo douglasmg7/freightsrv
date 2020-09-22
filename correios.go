@@ -101,6 +101,8 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 	result := &freightsOk{
 		Freights: []*freight{},
 	}
+	result.CEPOrigin = p.CEPOrigin
+	result.CEPDestiny = p.CEPDestiny
 
 	if !p.ValidateCorreios() {
 		c <- result
@@ -208,6 +210,7 @@ func getCorreiosFreightByPack(c chan *freightsOk, p *pack) {
 		setCorreiosCache(p, result.Freights)
 	}
 	result.Ok = true
+	// log.Printf("result: %+v", result)
 	c <- result
 }
 

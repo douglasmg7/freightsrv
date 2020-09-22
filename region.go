@@ -18,6 +18,8 @@ func getFreightRegionByCEPAndWeight(c chan *freightsOk, cep string, weight int) 
 	result := &freightsOk{
 		Freights: []*freight{},
 	}
+	result.CEPOrigin = CEP_ZUNKA
+	result.CEPDestiny = cep
 
 	// Inválid weight.
 	if weight == 0 {

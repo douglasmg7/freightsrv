@@ -19,6 +19,9 @@ func getMotoboyFreightByCEP(c chan *freightsOk, cep string) {
 	result := &freightsOk{
 		Freights: []*freight{},
 	}
+	result.CEPOrigin = CEP_ZUNKA
+	result.CEPDestiny = cep
+	// log.Printf("motoboy result: %+v", result)
 
 	address, err := getAddressByCEP(cep)
 	if checkError(err) {
@@ -41,6 +44,7 @@ func getMotoboyFreightByCEP(c chan *freightsOk, cep string) {
 	result.Freights = append(result.Freights, &fr)
 	result.Ok = true
 
+	// log.Printf("motoboy result: %+v", result)
 	c <- result
 }
 

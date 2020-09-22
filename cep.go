@@ -107,3 +107,21 @@ func getRegionByCEP(cep string) (region string, err error) {
 
 	return region, nil
 }
+
+// CEP by dealer location.
+func getCEPByDealerLocation(dealer string, stockLocation string) string {
+	switch strings.ToLower(dealer) {
+	case "aldo":
+		return CEP_ALDO
+	case "allnations":
+		switch strings.ToLower(stockLocation) {
+		case "es":
+			return CEP_ALLNATIONS_ES
+		case "rj":
+			return CEP_ALLNATIONS_RJ
+		case "sc":
+			return CEP_ALLNATIONS_SC
+		}
+	}
+	return ""
+}
