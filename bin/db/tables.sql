@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS freight_region  (
     UNIQUE (region, weight, deadline)
 ); 
 
-CREATE TRIGGER freight_region_trigger_updated_at
+CREATE TRIGGER IF NOT EXISTS freight_region_trigger_updated_at
 AFTER UPDATE ON freight_region
 BEGIN
    UPDATE freight_region SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
@@ -38,8 +38,26 @@ CREATE TABLE IF NOT EXISTS motoboy_freight  (
     UNIQUE (state, city_norm)
 ); 
 
-CREATE TRIGGER motoboy_freight_trigger_updated_at
+CREATE TRIGGER IF NOT EXISTS motoboy_freight_trigger_updated_at
 AFTER UPDATE ON motoboy_freight
 BEGIN
    UPDATE motoboy_freight SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;
+
+-- Dealer freight.
+CREATE TABLE IF NOT EXISTS dealer_freight (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dealer VARCHAR(64) NOT NULL,
+    weight INTEGER CHECK(weight >= 100) NOT NULL,    -- g
+    deadline INTEGER CHECK(deadline > 0) NOT NULL,  -- days
+    price INTEGER CHECK(price>0) NOT NULL,     -- R$ X 100
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (dealer, weight, deadline)
+); 
+
+CREATE TRIGGER IF NOT EXISTS dealer_freight_trigger_updated_at
+AFTER UPDATE ON dealer_freight
+BEGIN
+   UPDATE dealer_freight SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;
