@@ -53,7 +53,7 @@ type motoboyFreight struct {
 
 type dealerFreight struct {
 	ID        int       `db:"id" json:"id"`
-	dealer    string    `db:"dealer" json:"dealer"`
+	Dealer    string    `db:"dealer" json:"dealer"`
 	Weight    int       `db:"weight" json:"weight"`     // g
 	Deadline  int       `db:"deadline" json:"deadline"` // days
 	Price     int       `db:"price" json:"price"`       // R$ X 100

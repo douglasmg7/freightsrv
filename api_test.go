@@ -827,6 +827,154 @@ func TestDeleteRegionFreightAPI(t *testing.T) {
 }
 
 /******************************************************************************
+*	Dealer freights
+*******************************************************************************/
+var dealerFreightTemp = dealerFreight{
+	Dealer:   "allnations",
+	Weight:   4000,
+	Deadline: 8,
+	Price:    12345,
+}
+
+// Create region freight.
+func TestCreateDealerFreightAPI(t *testing.T) {
+	// Url.
+	url := "/freightsrv/dealer-freight"
+
+	frJSON, err := json.Marshal(dealerFreightTemp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	want := 200
+	if res.Code != want {
+		t.Errorf("got:  %v, want  %v\n", res.Code, want)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+	}
+}
+
+// All region freights.
+func TestGetAllDealerFreightsAPI(t *testing.T) {
+	url := "/freightsrv/dealer-freights"
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		return
+	}
+
+	freights := []dealerFreight{}
+	err = json.Unmarshal(res.Body.Bytes(), &freights)
+	if err != nil {
+		t.Errorf("Err: %s", err)
+		return
+	}
+
+	valid := false
+	want := dealerFreightTemp
+	for _, freight := range freights {
+		if freight.Dealer == want.Dealer && freight.Weight == want.Weight && freight.Deadline == want.Deadline && freight.Price == want.Price {
+			valid = true
+			regionFreightTemp.ID = freight.ID
+		}
+	}
+	if !valid {
+		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freights, want.Dealer, want.Weight, want.Deadline, want.Price)
+	}
+}
+
+// Get one region freight.
+func TestGetOneDealerFreightAPI(t *testing.T) {
+	url := fmt.Sprintf("/freightsrv/dealer-freight/%d", dealerFreightTemp.ID)
+	// log.Printf("url: %v", url)
+
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		return
+	}
+
+	freight := dealerFreight{}
+	err = json.Unmarshal(res.Body.Bytes(), &freight)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	// log.Printf("Freight: %+v", freight)
+
+	want := dealerFreightTemp
+	if freight.Dealer != want.Dealer || freight.Weight != want.Weight || freight.Deadline != want.Deadline || freight.Price != want.Price {
+		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freight, want.Dealer, want.Weight, want.Deadline, want.Price)
+	}
+}
+
+// Update region freight.
+func TestUpdateDealerFreightAPI(t *testing.T) {
+	// Url.
+	url := "/freightsrv/dealer-freight"
+
+	dealerFreightTemp.Price = 54321
+	frJSON, err := json.Marshal(dealerFreightTemp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+		return
+	}
+}
+
+// Delete region freight.
+func TestDeleteDealerFreightAPI(t *testing.T) {
+	// Url.
+	url := fmt.Sprintf("/freightsrv/dealer-freight/%d", dealerFreightTemp.ID)
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+		return
+	}
+}
+
+/******************************************************************************
 *	MOTOBOY
 *******************************************************************************/
 // Get all motoboy freights.

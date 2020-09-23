@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -89,6 +90,7 @@ func getDealerFreightByDealerAndWeight(dealer string, weight int) (frs []regionF
 // Get dealer freight by id.
 func getDealerFreightById(id int) (fr dealerFreight, ok bool) {
 	err = sql3DB.Get(&fr, "SELECT * FROM dealer_freight WHERE id=?", id)
+	log.Printf("id: %v", id)
 	if checkError(err) {
 		return fr, false
 	}
@@ -97,8 +99,8 @@ func getDealerFreightById(id int) (fr dealerFreight, ok bool) {
 
 // Create dealer freight.
 func createDealerFreight(fr *dealerFreight) bool {
-	stm := "INSERT INTO dealer_freight(region, weight, deadline, price) VALUES(?, ?, ?, ?)"
-	result, err := sql3DB.Exec(stm, fr.dealer, fr.Weight, fr.Deadline, fr.Price)
+	stm := "INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES(?, ?, ?, ?)"
+	result, err := sql3DB.Exec(stm, fr.Dealer, fr.Weight, fr.Deadline, fr.Price)
 	if checkError(err) {
 		return false
 	}
@@ -117,7 +119,7 @@ func createDealerFreight(fr *dealerFreight) bool {
 // Update freight region.
 func updateDealerFreight(fr *dealerFreight) bool {
 	stm := "UPDATE dealer_freight SET dealer=?, weight=?, deadline=?, price=? WHERE id=?"
-	result, err := sql3DB.Exec(stm, fr.dealer, fr.Weight, fr.Deadline, fr.Price, fr.ID)
+	result, err := sql3DB.Exec(stm, fr.Dealer, fr.Weight, fr.Deadline, fr.Price, fr.ID)
 	if checkError(err) {
 		return false
 	}

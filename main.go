@@ -136,6 +136,13 @@ func init() {
 	router.DELETE("/freightsrv/region-freight/:id", checkAuthorization(deleteRegionFreightHandler, []string{"zunkasite"}))
 	router.PUT("/freightsrv/region-freight", checkAuthorization(updateRegionFreightHandler, []string{"zunkasite"}))
 	router.POST("/freightsrv/region-freight", checkAuthorization(createRegionFreightHandler, []string{"zunkasite"}))
+
+	// Dealer.
+	router.GET("/freightsrv/dealer-freights", checkAuthorization(getAllDealerFreightHandler, []string{"zunkasite"}))
+	router.GET("/freightsrv/dealer-freight/:id", checkAuthorization(getOneDealerFreightHandler, []string{"zunkasite"}))
+	router.DELETE("/freightsrv/dealer-freight/:id", checkAuthorization(deleteDealerFreightHandler, []string{"zunkasite"}))
+	router.PUT("/freightsrv/dealer-freight", checkAuthorization(updateDealerFreightHandler, []string{"zunkasite"}))
+	router.POST("/freightsrv/dealer-freight", checkAuthorization(createDealerFreightHandler, []string{"zunkasite"}))
 }
 
 func initRedis() {
