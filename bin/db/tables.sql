@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS dealer_freight (
     dealer VARCHAR(64) NOT NULL,
     weight INTEGER CHECK(weight >= 100) NOT NULL,    -- g
     deadline INTEGER CHECK(deadline > 0) NOT NULL,  -- days
-    price INTEGER CHECK(price>0) NOT NULL,     -- R$ X 100
+    price INTEGER CHECK(price>=0) NOT NULL,     -- R$ X 100
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (dealer, weight, deadline)

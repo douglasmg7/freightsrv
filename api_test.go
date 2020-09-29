@@ -890,7 +890,7 @@ func TestGetAllDealerFreightsAPI(t *testing.T) {
 	for _, freight := range freights {
 		if freight.Dealer == want.Dealer && freight.Weight == want.Weight && freight.Deadline == want.Deadline && freight.Price == want.Price {
 			valid = true
-			regionFreightTemp.ID = freight.ID
+			dealerFreightTemp.ID = freight.ID
 		}
 	}
 	if !valid {

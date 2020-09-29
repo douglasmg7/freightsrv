@@ -113,7 +113,7 @@ func deleteDealerFreightHandler(w http.ResponseWriter, req *http.Request, ps htt
 		return
 	}
 	// Delete.
-	ok := deleteFreightRegion(id)
+	ok := deleteDealerFreight(id)
 	if !ok {
 		http.Error(w, "Alguma coisa deu errado", http.StatusInternalServerError)
 		return

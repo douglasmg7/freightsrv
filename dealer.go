@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -90,7 +89,7 @@ func getDealerFreightByDealerAndWeight(dealer string, weight int) (frs []regionF
 // Get dealer freight by id.
 func getDealerFreightById(id int) (fr dealerFreight, ok bool) {
 	err = sql3DB.Get(&fr, "SELECT * FROM dealer_freight WHERE id=?", id)
-	log.Printf("id: %v", id)
+	// log.Printf("id: %v", id)
 	if checkError(err) {
 		return fr, false
 	}
