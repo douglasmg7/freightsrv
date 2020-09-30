@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -112,7 +117,7 @@ func TestGetRegionByCEP(t *testing.T) {
 // Get CEP by dealer location.
 func TestGetCEPByDealerLocation(t *testing.T) {
 	// Aldo.
-	cep := getCEPByDealerLocation("Aldo", "")
+	cep := getCEPByDealerLocation("Aldo")
 	if cep == "" {
 		t.Errorf("No CEP returned.\n")
 	}
@@ -122,7 +127,7 @@ func TestGetCEPByDealerLocation(t *testing.T) {
 	}
 
 	// Allnations ES.
-	cep = getCEPByDealerLocation("Allnations", "ES")
+	cep = getCEPByDealerLocation("allnations_es")
 	if cep == "" {
 		t.Errorf("No CEP returned.\n")
 	}
@@ -398,4 +403,207 @@ func TestDelMotoboyFreight(t *testing.T) {
 	if !ok {
 		t.Error(errors.New("Delete motoboy freight returned no ok."))
 	}
+}
+
+//*****************************************************************************
+// DEALER FREIGHT
+//*****************************************************************************
+var dealerFreightTemp = dealerFreight{
+	Dealer:   "allnations",
+	Weight:   4000,
+	Deadline: 8,
+	Price:    12345,
+}
+
+// Create dealer freight.
+func TestCreateDealerFreightAPI(t *testing.T) {
+	// Url.
+	url := "/freightsrv/dealer-freight"
+
+	frJSON, err := json.Marshal(dealerFreightTemp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, req)
+
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	want := 200
+	if res.Code != want {
+		t.Errorf("got:  %v, want  %v\n", res.Code, want)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+	}
+}
+
+// All dealer freights.
+func TestGetAllDealerFreightsAPI(t *testing.T) {
+	url := "/freightsrv/dealer-freights"
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		return
+	}
+
+	freights := []dealerFreight{}
+	err = json.Unmarshal(res.Body.Bytes(), &freights)
+	if err != nil {
+		t.Errorf("Err: %s", err)
+		return
+	}
+
+	valid := false
+	want := dealerFreightTemp
+	for _, freight := range freights {
+		if freight.Dealer == want.Dealer && freight.Weight == want.Weight && freight.Deadline == want.Deadline && freight.Price == want.Price {
+			valid = true
+			dealerFreightTemp.ID = freight.ID
+		}
+	}
+	if !valid {
+		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freights, want.Dealer, want.Weight, want.Deadline, want.Price)
+	}
+}
+
+// Get one dealer freight.
+func TestGetOneDealerFreightAPI(t *testing.T) {
+	url := fmt.Sprintf("/freightsrv/dealer-freight/%d", dealerFreightTemp.ID)
+	// log.Printf("url: %v", url)
+
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		return
+	}
+
+	freight := dealerFreight{}
+	err = json.Unmarshal(res.Body.Bytes(), &freight)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	// log.Printf("Freight: %+v", freight)
+
+	want := dealerFreightTemp
+	if freight.Dealer != want.Dealer || freight.Weight != want.Weight || freight.Deadline != want.Deadline || freight.Price != want.Price {
+		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freight, want.Dealer, want.Weight, want.Deadline, want.Price)
+	}
+}
+
+// Update dealer freight.
+func TestUpdateDealerFreightAPI(t *testing.T) {
+	// Url.
+	url := "/freightsrv/dealer-freight"
+
+	dealerFreightTemp.Price = 54321
+	frJSON, err := json.Marshal(dealerFreightTemp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(frJSON))
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+		return
+	}
+}
+
+// Delete dealer freight.
+func TestDeleteDealerFreightAPI(t *testing.T) {
+	// Url.
+	url := fmt.Sprintf("/freightsrv/dealer-freight/%d", dealerFreightTemp.ID)
+
+	// Request.
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	if res.Code != 200 {
+		t.Errorf("Returned code: %d", res.Code)
+		t.Errorf("res.Body:  %s\n", res.Body.String())
+		return
+	}
+}
+
+func TestGetDealerFreightByDealerAndWeight(t *testing.T) {
+	frs, ok := getDealerFreightByDealerAndWeight("aldo", 2000)
+	if !ok {
+		t.Error("Returned not ok")
+		return
+	}
+	if len(frs) <= 0 {
+		t.Error("Returned no value")
+	}
+	// for _, fr := range frs {
+	// log.Printf("fr: %+v", fr)
+	// }
+
+	frs, ok = getDealerFreightByDealerAndWeight("allnations", 2000)
+	if ok {
+		t.Error("Returned ok")
+		return
+	}
+
+	frs, ok = getDealerFreightByDealerAndWeight("allnations_rj", 5000)
+	if !ok {
+		t.Error("Returned not ok")
+		return
+	}
+	if len(frs) <= 0 {
+		t.Error("Returned no value")
+	}
+	// for _, fr := range frs {
+	// log.Printf("fr: %+v", fr)
+	// }
+}
+
+// Get motoboy freight by location.
+func TestGetDealerFreightByDealerLocationAndWeight(t *testing.T) {
+	c := make(chan *freightsOk)
+	go getDealerFreightByDealerLocationAndWeight(c, "allnations_rj", 5000)
+
+	frsOk := <-c
+	if !frsOk.Ok {
+		t.Error("Dealer freight returned not ok")
+		return
+	}
+
+	if len(frsOk.Freights) == 0 {
+		t.Error("Dealer freight returned no freight")
+		return
+	}
+
+	if frsOk.Freights[0].Deadline == 0 {
+		t.Errorf("Dealer fregiht deadline = 0, want > 0")
+		return
+	}
+	// log.Printf("*frsOk.Freights[0]: %+v", *frsOk.Freights[0])
 }

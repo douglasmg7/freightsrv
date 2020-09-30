@@ -130,8 +130,8 @@ func TestGetAddressByCEPAPI(t *testing.T) {
 /******************************************************************************
 * Freights
 *******************************************************************************/
-// Zunka freight correios and motoboy.
-func Test_FreightZunkaAPIV2CorreiosAndMotoboy(t *testing.T) {
+// Zunka freight correios and motoboy
+func Test_FreightZunkaAPIV2CorreiosAndMotoboyForOneProduct(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "31170210",
 		Products: []zunkaProduct{
@@ -202,7 +202,7 @@ func Test_FreightZunkaAPIV2CorreiosAndMotoboy(t *testing.T) {
 }
 
 // Zunka freight only correios.
-func Test_FreightZunkaAPIV2OnlyCorreios(t *testing.T) {
+func Test_FreightZunkaAPIV2OnlyCorreiosOneProductNotForBigBH(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "88512530",
 		Products: []zunkaProduct{
@@ -276,7 +276,7 @@ func Test_FreightZunkaAPIV2OnlyCorreios(t *testing.T) {
 }
 
 // Zunka freight only transportadora.
-func Test_FreightZunkaAPIV2OnlyTransportadora(t *testing.T) {
+func Test_FreightZunkaAPIV2OnlyTransportadoraOneLongProduct(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "88512530",
 		// Use a lenght not supported by Correios carrier.
@@ -327,14 +327,6 @@ func Test_FreightZunkaAPIV2OnlyTransportadora(t *testing.T) {
 			haveTransporter = true
 		} else if fr.Carrier == "Correios" {
 			haveCorreios = true
-			if fr.ServiceCode == "" {
-				t.Errorf("Correios service code empty")
-				return
-			}
-			if fr.ServiceDesc == "" {
-				t.Errorf("Correios service description empty")
-				return
-			}
 		} else if fr.Carrier == "Motoboy" {
 			haveMotoboy = true
 		}
@@ -351,7 +343,7 @@ func Test_FreightZunkaAPIV2OnlyTransportadora(t *testing.T) {
 }
 
 // Zunka freight dealer to client.
-func Test_FreightZunkaAPIV2DealerOnlyCorreios(t *testing.T) {
+func Test_FreightZunkaAPIV2ProductFromDealerOnlyCorreios(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "88512530",
 		Products: []zunkaProduct{
@@ -389,7 +381,157 @@ func Test_FreightZunkaAPIV2DealerOnlyCorreios(t *testing.T) {
 
 	frs := []freight{}
 	json.Unmarshal(res.Body.Bytes(), &frs)
-	log.Printf("frs: %+v", frs)
+	// log.Printf("frs: %+v", frs)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreios := false
+	haveTransporter := false
+
+	for _, fr := range frs {
+		if strings.HasPrefix(fr.Carrier, "Transportadora") {
+			haveTransporter = true
+		} else if fr.Carrier == "Correios" {
+			haveCorreios = true
+			if fr.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if fr.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		}
+		if fr.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreios {
+		t.Errorf("got:  %q, not have Correios carrier", got)
+	}
+	if haveTransporter {
+		t.Errorf("got:  %q, have transportadora carrier", got)
+	}
+	if haveMotoboy {
+		t.Errorf("got:  %q, have motoboy carrier", got)
+	}
+}
+
+// Zunka freight dealer to client.
+func Test_FreightZunkaAPIV2ProductFromDealerToBHOnlyCorreios(t *testing.T) {
+	productsIn := zunkaProducts{
+		CepDestiny: "31170210",
+		Products: []zunkaProduct{
+			{
+				ID:            "1234",
+				Dealer:        "Allnations",
+				StockLocation: "",
+				Length:        20,
+				Width:         90,
+				Height:        39,
+				Weight:        1250,
+				Quantity:      2,
+				Price:         2512.22,
+			},
+		},
+	}
+
+	// log.Printf("productsIn: %+v\n", productsIn)
+	reqBody, err := json.Marshal(productsIn)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frs := []freight{}
+	json.Unmarshal(res.Body.Bytes(), &frs)
+	// log.Printf("frs: %+v", frs)
+
+	got := res.Body.String()
+	haveMotoboy := false
+	haveCorreios := false
+	haveTransporter := false
+
+	for _, fr := range frs {
+		if strings.HasPrefix(fr.Carrier, "Transportadora") {
+			haveTransporter = true
+		} else if fr.Carrier == "Correios" {
+			haveCorreios = true
+			if fr.ServiceCode == "" {
+				t.Errorf("Correios service code empty")
+				return
+			}
+			if fr.ServiceDesc == "" {
+				t.Errorf("Correios service description empty")
+				return
+			}
+		}
+		if fr.Carrier == "Motoboy" {
+			haveMotoboy = true
+		}
+	}
+	if !haveCorreios {
+		t.Errorf("got:  %q, not have Correios carrier", got)
+	}
+	if haveTransporter {
+		t.Errorf("got:  %q, have transportadora carrier", got)
+	}
+	if haveMotoboy {
+		t.Errorf("got:  %q, have motoboy carrier", got)
+	}
+}
+
+// Zunka freight dealer to client.
+func Test_FreightZunkaAPIV2ProductFromDealerToBHOnlyTransportadora(t *testing.T) {
+	productsIn := zunkaProducts{
+		CepDestiny: "31170210",
+		Products: []zunkaProduct{
+			{
+				ID:            "1234",
+				Dealer:        "Allnations",
+				StockLocation: "",
+				Length:        20,
+				Width:         90,
+				Height:        39,
+				Weight:        1250,
+				Quantity:      2,
+				Price:         2512.22,
+			},
+		},
+	}
+
+	// log.Printf("productsIn: %+v\n", productsIn)
+	reqBody, err := json.Marshal(productsIn)
+	if err != nil {
+		t.Error(err)
+	}
+	// log.Println("request body: " + string(reqBody))
+
+	url := "/freightsrv/freights/zunka"
+	req, _ := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(reqBody))
+
+	req.SetBasicAuth("bypass", "123456")
+	req.Header.Set("Content-Type", "application/json")
+
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+	// log.Printf("res.Body: %s", res.Body.String())
+
+	frs := []freight{}
+	json.Unmarshal(res.Body.Bytes(), &frs)
+	// log.Printf("frs: %+v", frs)
 
 	got := res.Body.String()
 	haveMotoboy := false
@@ -827,152 +969,8 @@ func TestDeleteRegionFreightAPI(t *testing.T) {
 }
 
 /******************************************************************************
-*	Dealer freights
+*	DEALER FREIGHTS
 *******************************************************************************/
-var dealerFreightTemp = dealerFreight{
-	Dealer:   "allnations",
-	Weight:   4000,
-	Deadline: 8,
-	Price:    12345,
-}
-
-// Create region freight.
-func TestCreateDealerFreightAPI(t *testing.T) {
-	// Url.
-	url := "/freightsrv/dealer-freight"
-
-	frJSON, err := json.Marshal(dealerFreightTemp)
-	if err != nil {
-		t.Error(err)
-	}
-
-	// Request.
-	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(frJSON))
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-	res := httptest.NewRecorder()
-	router.ServeHTTP(res, req)
-
-	// log.Printf("res.Body: %s", res.Body.String())
-
-	want := 200
-	if res.Code != want {
-		t.Errorf("got:  %v, want  %v\n", res.Code, want)
-		t.Errorf("res.Body:  %s\n", res.Body.String())
-	}
-}
-
-// All region freights.
-func TestGetAllDealerFreightsAPI(t *testing.T) {
-	url := "/freightsrv/dealer-freights"
-	req, _ := http.NewRequest(http.MethodGet, url, nil)
-
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-	if res.Code != 200 {
-		t.Errorf("Returned code: %d", res.Code)
-		return
-	}
-
-	freights := []dealerFreight{}
-	err = json.Unmarshal(res.Body.Bytes(), &freights)
-	if err != nil {
-		t.Errorf("Err: %s", err)
-		return
-	}
-
-	valid := false
-	want := dealerFreightTemp
-	for _, freight := range freights {
-		if freight.Dealer == want.Dealer && freight.Weight == want.Weight && freight.Deadline == want.Deadline && freight.Price == want.Price {
-			valid = true
-			dealerFreightTemp.ID = freight.ID
-		}
-	}
-	if !valid {
-		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freights, want.Dealer, want.Weight, want.Deadline, want.Price)
-	}
-}
-
-// Get one region freight.
-func TestGetOneDealerFreightAPI(t *testing.T) {
-	url := fmt.Sprintf("/freightsrv/dealer-freight/%d", dealerFreightTemp.ID)
-	// log.Printf("url: %v", url)
-
-	req, _ := http.NewRequest(http.MethodGet, url, nil)
-
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-	if res.Code != 200 {
-		t.Errorf("Returned code: %d", res.Code)
-		return
-	}
-
-	freight := dealerFreight{}
-	err = json.Unmarshal(res.Body.Bytes(), &freight)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	// log.Printf("Freight: %+v", freight)
-
-	want := dealerFreightTemp
-	if freight.Dealer != want.Dealer || freight.Weight != want.Weight || freight.Deadline != want.Deadline || freight.Price != want.Price {
-		t.Errorf("got:  %v\nwant %v, %v, %v, %v", freight, want.Dealer, want.Weight, want.Deadline, want.Price)
-	}
-}
-
-// Update region freight.
-func TestUpdateDealerFreightAPI(t *testing.T) {
-	// Url.
-	url := "/freightsrv/dealer-freight"
-
-	dealerFreightTemp.Price = 54321
-	frJSON, err := json.Marshal(dealerFreightTemp)
-	if err != nil {
-		t.Error(err)
-	}
-
-	// Request.
-	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewReader(frJSON))
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-	if res.Code != 200 {
-		t.Errorf("Returned code: %d", res.Code)
-		t.Errorf("res.Body:  %s\n", res.Body.String())
-		return
-	}
-}
-
-// Delete region freight.
-func TestDeleteDealerFreightAPI(t *testing.T) {
-	// Url.
-	url := fmt.Sprintf("/freightsrv/dealer-freight/%d", dealerFreightTemp.ID)
-
-	// Request.
-	req, _ := http.NewRequest(http.MethodDelete, url, nil)
-	req.SetBasicAuth("bypass", "123456")
-	req.Header.Set("Content-Type", "application/json")
-	res := httptest.NewRecorder()
-
-	router.ServeHTTP(res, req)
-	if res.Code != 200 {
-		t.Errorf("Returned code: %d", res.Code)
-		t.Errorf("res.Body:  %s\n", res.Body.String())
-		return
-	}
-}
 
 /******************************************************************************
 *	MOTOBOY

@@ -83,7 +83,8 @@ func freightsZunkaHandlerV2(w http.ResponseWriter, req *http.Request, ps httprou
 	// Dealer to zunka.
 	dealerPacks := []pack{}
 	for _, dealerToZunkaProducts := range dealerProductsMap {
-		p, err := createPackV2(getCEPByDealerLocation(dealerToZunkaProducts[0].Dealer, dealerToZunkaProducts[0].StockLocation), CEP_ZUNKA, dealerToZunkaProducts)
+		dealer := strings.ToLower(dealerToZunkaProducts[0].Dealer) + "_" + strings.ToLower(dealerToZunkaProducts[0].StockLocation)
+		p, err := createPackV2(getCEPByDealerLocation(dealer), CEP_ZUNKA, dealerToZunkaProducts)
 		// log.Printf("Dealer pack: %+v\n\n", p)
 		if checkError(err) {
 			http.Error(w, "Could not create package. %v", http.StatusInternalServerError)
@@ -110,13 +111,19 @@ func freightsZunkaHandlerV2(w http.ResponseWriter, req *http.Request, ps httprou
 	chanFreightS = append(chanFreightS, chanFreight)
 	go getFreightRegionByCEPAndWeight(chanFreight, zunkaToClientPack.CEPDestiny, zunkaToClientPack.Weight)
 
-	// Dealer correios.
+	// Dealer
 	for i := range dealerPacks {
+		// Correios
 		chanDealer := make(chan *freightsOk)
 		chanFreightS = append(chanFreightS, chanDealer)
 		// dealerPacks[i].Dealer = fmt.Sprintf("%v", i)
 		// log.Printf("pack: %+v", &dealerPacks[i])
 		go getCorreiosFreightByPack(chanDealer, &dealerPacks[i])
+
+		// // Table
+		// chanDealer = make(chan *freightsOk)
+		// chanFreightS = append(chanFreightS, chanDealer)
+		// go getDealerFreightByDealerAndLocationAndWeight(chanDealer, dealerPacks[i].
 	}
 
 	// Dealer region.

@@ -26,5 +26,5 @@ INSERT INTO motoboy_freight(city, city_norm, deadline, price) VALUES ("Sabará",
 INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("aldo", 4000, 6, 11000);
 INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("aldo", 100000, 6, 13000);
 
-INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations", 4000, 5, 10000);
-INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations", 100000, 5, 12000);
+INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations_rj", 4000, 5, 10000);
+INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations_rj", 100000, 5, 12000);

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -15,13 +16,13 @@ func getAllDealerFreight() (frS []dealerFreight, ok bool) {
 	return frS, true
 }
 
-// Get dealer freight by dealer, location  and weight.
-func getDealerFreightByDealerAndLocationAndWeight(c chan *freightsOk, dealer string, stockLocation string, weight int) {
+// Get dealer freight by dealer_location  and weight.
+func getDealerFreightByDealerLocationAndWeight(c chan *freightsOk, dealer string, weight int) {
 	result := &freightsOk{
 		Freights: []*freight{},
 	}
 
-	result.CEPOrigin = getCEPByDealerLocation(dealer, stockLocation)
+	result.CEPOrigin = getCEPByDealerLocation(dealer)
 	result.CEPDestiny = CEP_ZUNKA
 
 	// Inválid CEP origin.
@@ -36,12 +37,12 @@ func getDealerFreightByDealerAndLocationAndWeight(c chan *freightsOk, dealer str
 		return
 	}
 
-	delaerLocation := strings.ToLower(dealer)
-	if stockLocation != "" {
-		delaerLocation = delaerLocation + "_" + strings.ToLower(stockLocation)
-	}
+	// delaerLocation := strings.ToLower(dealer)
+	// if stockLocation != "" {
+	// delaerLocation = delaerLocation + "_" + strings.ToLower(stockLocation)
+	// }
 
-	frs, ok := getFreightRegionByRegionAndWeight(delaerLocation, weight)
+	frs, ok := getDealerFreightByDealerAndWeight(dealer, weight)
 	// log.Printf("frs: %+v", frs)
 	if !ok {
 		c <- result
@@ -61,25 +62,29 @@ func getDealerFreightByDealerAndLocationAndWeight(c chan *freightsOk, dealer str
 }
 
 // Get dealer freight by dealer and weight.
-func getDealerFreightByDealerAndWeight(dealer string, weight int) (frs []regionFreight, ok bool) {
+func getDealerFreightByDealerAndWeight(dealer string, weight int) (frs []dealerFreight, ok bool) {
 	// Inváid weight.
 	if weight == 0 {
+		log.Printf("[warning] [dealer] Invalid dealer %v with weight of %v grams", dealer, weight)
 		return frs, false
 	}
 	// Select weight.
 	var weightSel int
 	err = sql3DB.Get(&weightSel, "SELECT CASE WHEN MIN(weight) IS NULL THEN 0 ELSE MIN(weight) END FROM dealer_freight WHERE dealer==? AND weight>=? ORDER BY deadline;", dealer, weight)
 	if checkError(err) {
+		log.Printf("[error] [dealer] getting freight by dealer and weight, dealer %v with weight of %v grams, error: %v", dealer, weight, err)
 		return frs, false
 	}
 	// log.Printf("weightSel: %v", weightSel)
 	// NULL from sqlite, no record for selected dealer and weight.
 	if weightSel == 0 {
+		log.Printf("[warning] [dealer] Getting freight by dealer and weight, dealer %v with weight of %v grams not returned a weight limit", dealer, weight)
 		return frs, false
 	}
 
 	err = sql3DB.Select(&frs, "SELECT * FROM dealer_freight WHERE dealer=? AND weight==? ORDER BY deadline", dealer, weightSel)
 	if checkError(err) {
+		log.Printf("[error] [dealer] getting freight by dealer and weight, dealer %v with weight of %v grams, weightSel: %v, error: %v", dealer, weight, weightSel, err)
 		return frs, false
 	}
 	// log.Printf("getFreightRegionByRegionAndWeight: %+v", frs)
@@ -99,7 +104,7 @@ func getDealerFreightById(id int) (fr dealerFreight, ok bool) {
 // Create dealer freight.
 func createDealerFreight(fr *dealerFreight) bool {
 	stm := "INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES(?, ?, ?, ?)"
-	result, err := sql3DB.Exec(stm, fr.Dealer, fr.Weight, fr.Deadline, fr.Price)
+	result, err := sql3DB.Exec(stm, strings.ToLower(fr.Dealer), fr.Weight, fr.Deadline, fr.Price)
 	if checkError(err) {
 		return false
 	}
