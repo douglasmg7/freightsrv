@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -342,7 +341,7 @@ func Test_FreightZunkaAPIV2OnlyTransportadoraOneLongProduct(t *testing.T) {
 	}
 }
 
-// Zunka freight dealer to client.
+// Zunka freight product from dealer to client only correios.
 func Test_FreightZunkaAPIV2ProductFromDealerOnlyCorreios(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "88512530",
@@ -417,15 +416,15 @@ func Test_FreightZunkaAPIV2ProductFromDealerOnlyCorreios(t *testing.T) {
 	}
 }
 
-// Zunka freight dealer to client.
-func Test_FreightZunkaAPIV2ProductFromDealerToBHOnlyCorreios(t *testing.T) {
+// Zunka freight product from dealer to BH client only correios
+func TestFreightZunkaAPIV2ProductFromDealerToBHOnlyCorreios(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "31170210",
 		Products: []zunkaProduct{
 			{
 				ID:            "1234",
 				Dealer:        "Allnations",
-				StockLocation: "",
+				StockLocation: "rj",
 				Length:        20,
 				Width:         90,
 				Height:        39,
@@ -492,20 +491,21 @@ func Test_FreightZunkaAPIV2ProductFromDealerToBHOnlyCorreios(t *testing.T) {
 	}
 }
 
-// Zunka freight dealer to client.
-func Test_FreightZunkaAPIV2ProductFromDealerToBHOnlyTransportadora(t *testing.T) {
+// Zunka freight product from dealer to BH client only trasportadora
+// Using a lenght not suprted by correios
+func TestFreightZunkaAPIV2ProductFromDealerToBHOnlyTransportadora(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "31170210",
 		Products: []zunkaProduct{
 			{
 				ID:            "1234",
 				Dealer:        "Allnations",
-				StockLocation: "",
-				Length:        20,
+				StockLocation: "rj",
+				Length:        200,
 				Width:         90,
 				Height:        39,
 				Weight:        1250,
-				Quantity:      2,
+				Quantity:      1,
 				Price:         2512.22,
 			},
 		},
@@ -556,11 +556,11 @@ func Test_FreightZunkaAPIV2ProductFromDealerToBHOnlyTransportadora(t *testing.T)
 			haveMotoboy = true
 		}
 	}
-	if !haveCorreios {
-		t.Errorf("got:  %q, not have Correios carrier", got)
+	if haveCorreios {
+		t.Errorf("got:  %q, have Correios carrier", got)
 	}
-	if haveTransporter {
-		t.Errorf("got:  %q, have transportadora carrier", got)
+	if !haveTransporter {
+		t.Errorf("got:  %q, not have transportadora carrier", got)
 	}
 	if haveMotoboy {
 		t.Errorf("got:  %q, have motoboy carrier", got)
@@ -568,7 +568,7 @@ func Test_FreightZunkaAPIV2ProductFromDealerToBHOnlyTransportadora(t *testing.T)
 }
 
 // Zunka freight dealer to client.
-func Test_FreightZunkaAPIV2DealerSeveral(t *testing.T) {
+func TestFreightZunkaAPIV2DealerAndZunkaSeveral(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "88512530",
 		Products: []zunkaProduct{
@@ -639,7 +639,7 @@ func Test_FreightZunkaAPIV2DealerSeveral(t *testing.T) {
 
 	frs := []freight{}
 	json.Unmarshal(res.Body.Bytes(), &frs)
-	log.Printf("frs: %+v", frs)
+	// log.Printf("frs: %+v", frs)
 
 	got := res.Body.String()
 	haveMotoboy := false
@@ -664,8 +664,14 @@ func Test_FreightZunkaAPIV2DealerSeveral(t *testing.T) {
 			haveMotoboy = true
 		}
 	}
-	if !haveCorreios && !haveTransporter && !haveMotoboy {
-		t.Errorf("got:  %q, None freight", got)
+	if !haveCorreios {
+		t.Errorf("got:  %q, Not have Correios carrier", got)
+	}
+	if haveTransporter {
+		t.Errorf("got:  %q, Have transportadora carrier", got)
+	}
+	if haveMotoboy {
+		t.Errorf("got:  %q, have motoboy carrier", got)
 	}
 }
 

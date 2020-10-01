@@ -27,24 +27,21 @@ func getDealerFreightByDealerLocationAndWeight(c chan *freightsOk, dealer string
 
 	// Inválid CEP origin.
 	if result.CEPOrigin == "" {
+		log.Printf("[warning] [dealer] Could not get CEP origin for dealer %v with weight of %v grams", dealer, weight)
 		c <- result
 		return
 	}
 
 	// Inválid weight.
 	if weight == 0 {
+		log.Printf("[warning] [dealer] Delaer %v have an invalid weight of %v grams", dealer, weight)
 		c <- result
 		return
 	}
 
-	// delaerLocation := strings.ToLower(dealer)
-	// if stockLocation != "" {
-	// delaerLocation = delaerLocation + "_" + strings.ToLower(stockLocation)
-	// }
-
 	frs, ok := getDealerFreightByDealerAndWeight(dealer, weight)
-	// log.Printf("frs: %+v", frs)
 	if !ok {
+		log.Printf("[warning] [dealer] Not received valids freights for delaer %v and weight of %v grams", dealer, weight)
 		c <- result
 		return
 	}
