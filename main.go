@@ -121,7 +121,8 @@ func init() {
 	// todo - remove user test from this point.
 	router.GET("/freightsrv/freights/zunka", checkAuthorization(freightsZunkaHandlerV2, []string{"zunkasite"}))
 	// router.POST("/freightsrv/freights/zoom", checkAuthorization(freightsZoomHandler, []string{"zoombuscape"}))
-	router.POST("/freightsrv/freights/zoom", freightsZoomHandler)
+	router.POST("/freightsrv/freights/zoom", freightsZoomHandlerV2)
+	// router.POST("/freightsrv/freights/zoom", freightsZoomHandler)
 
 	// Motoboy.
 	router.GET("/freightsrv/motoboy-freights", checkAuthorization(getAllMotoboyFreightHandler, []string{"zunkasite"}))

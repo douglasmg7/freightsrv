@@ -31,3 +31,6 @@ INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations_
 
 INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations_es", 4000, 3, 11100);
 INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations_es", 100000, 3, 12200);
+
+INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations_sc", 4000, 4, 12200);
+INSERT INTO dealer_freight(dealer, weight, deadline, price) VALUES ("allnations_sc", 100000, 4, 13300);

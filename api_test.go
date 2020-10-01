@@ -130,7 +130,7 @@ func TestGetAddressByCEPAPI(t *testing.T) {
 * Freights
 *******************************************************************************/
 // Zunka freight correios and motoboy
-func Test_FreightZunkaAPIV2CorreiosAndMotoboyForOneProduct(t *testing.T) {
+func TestFreightZunkaAPIV2CorreiosAndMotoboyForOneProduct(t *testing.T) {
 	productsIn := zunkaProducts{
 		CepDestiny: "31170210",
 		Products: []zunkaProduct{
@@ -676,7 +676,8 @@ func TestFreightZunkaAPIV2DealerAndZunkaSeveral(t *testing.T) {
 }
 
 // Zunka freight local stock to BH.
-func Test_FreightZunkaAPI(t *testing.T) {
+func TestFreightZunkaAPI(t *testing.T) {
+	t.Skip("Old api, to be deleted")
 	p := pack{
 		CEPDestiny: "31170210",
 		Weight:     1500, // g.
@@ -748,7 +749,8 @@ func TestProductFreightZoomAPI(t *testing.T) {
 	}
 	// First product.
 	fRequest.Items = append(fRequest.Items, zoomFregihtRequestItem{
-		ProductId: "5e60eed63d13910785412eba",
+		// ProductId: "5e60eed63d13910785412eba",
+		ProductId: "5f62681171bb6236fb00c50c",
 		Quantity:  1,
 		Price:     34.4,
 		Weight:    2,

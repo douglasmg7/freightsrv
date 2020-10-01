@@ -98,11 +98,11 @@ func (p *pack) Validate() bool {
 	minWeight := 1
 	maxWeight := 50000
 	if p.Weight < minWeight {
-		log.Printf("[warning] Invalid weight of %v kg. Must be more than %v kg", p.Weight, minWeight)
+		log.Printf("[warning] Invalid weight of %v grams. Must be more than %v grams", p.Weight, minWeight)
 		return false
 	}
 	if p.Weight > maxWeight {
-		log.Printf("[warning] Invalid weight of %v kg. Must be less than %v kg", p.Weight, maxWeight)
+		log.Printf("[warning] Invalid weight of %v grams. Must be less than %v grams", p.Weight, maxWeight)
 		return false
 	}
 
